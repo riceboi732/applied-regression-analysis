@@ -1,0 +1,106 @@
+---
+title: "Stat 230 Group HW 2"
+output: html_document
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, 
+                      message = FALSE, warning = FALSE)
+```
+
+### Group number:
+
+### Recorder: 
+
+### Grader: 
+
+### Participants: 
+
+## Due: 3pm Friday, Sept 24
+
+## Grading due: noon Sunday, Sept 26
+
+Use this Markdown template to answer the questions below. Knit to a Word or pdf doc and upload this doc to the group homework forum. Grader comments can be added as comments to this forum post. 
+
+
+### Problem: Teacher evaluations
+
+This problem looks at end of semester student evaluations for 463 courses taught by a sample of 94 professors from the University of Texas at Austin. We want to investigate a possible relationship between a teacher's physical appearance and their teaching evaluation, both evaluated by students. The variables we will consider in this HW are:
+
+- `score`: Average professor evaluation score, from (1) very unsatisfactory - (5) excellent
+- `bty_avg`: Average beauty rating of professor, from (1) lowest - (10) highest
+
+```{r}
+evals <- read.csv("https://math.carleton.edu/kstclair/data/teacher_evals.csv")
+str(evals)
+```
+
+#### (a) Load the `skimr` package and run `skim_without_charts(evals)` to get quick univariate EDA summaries for this data set. Report the mean values of `score` or `bty_avg` and determine if there are any missing values for these variables.  (Note: the `skim` function includes mini-histogram charts but these cause an error when knitting to a pdf format.)
+
+*answer:* 
+
+```{r}
+# part (a) code
+```
+
+
+#### (b) Use the `ggplot2` package to create a scatterplot of `score` against `bty_avg` with a `geom_smooth` smoother line ("loess") added without error shading around the line. Comment on the form, direction and strength of the relationship between eval score and beauty score. 
+
+
+
+*answer:* 
+
+```{r}
+# part (b) code
+```
+
+
+
+#### (c) Add a SLR `lm` line to the scatterplot in (b) with an added `color = "red"` argument and exclude the error shading. Your graph should now have 2 lines, one a red SLR line and one a blue loess smoother line. Where does the relationship between beauty and eval score look nonlinear? Is there a range of beauty scores where the relationship looks approximately linear? 
+
+
+*answer:* 
+
+```{r}
+# part (c) code
+```
+
+#### (d) Modify your graph in part (c) to use `geom_jitter` instead of `geom_point`. Explain the difference in plots between (c) and (d) and explain why using `geom_jitter` reveals about the data that `geom_point` does not. 
+
+
+*answer:* 
+
+```{r}
+# part (d) code
+```
+
+#### (e) Fit the regression of `score` on `bty_avg` and write down the equation for the estimated mean score regression line and give the estimated model SD. 
+(Note: the limitations of this model will be assessed in the next HW set)
+
+
+*answer:* 
+
+```{r}
+# part (e) code
+```
+
+
+#### (f)  Use your model summary from (e) to give the p-value and conclusion for the test of $H_O: \beta_1 = 0$ vs. $H_A: \beta_1 \neq 0$
+
+
+*answer:* 
+
+```{r}
+# part (f) code
+```
+
+
+
+#### (h) Use `confint` or `broom::tidy` to get a 95% CI for $\beta_1$ and interpret the CI in context with a directional statement. 
+
+
+*answer:* 
+
+```{r}
+# part (h) code
+```

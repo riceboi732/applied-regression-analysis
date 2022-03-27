@@ -1,0 +1,3 @@
+"0","ex2113 <- ex2113"
+"0","ex2113_glm <- glm(WithoutIllness/Number ~ Dose, family = ""binomial"", weights = Number, data = ex2113)"
+"0","tidy(ex2113_glm, conf.int=TRUE)"

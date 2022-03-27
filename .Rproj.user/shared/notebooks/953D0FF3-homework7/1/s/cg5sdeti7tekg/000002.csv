@@ -1,0 +1,6 @@
+"0","m <- c(200745, 201229, 338778)"
+"0","y <- c(33,115,121)"
+"0","consent<- c(""yes"",""yes"",""no"")"
+"0","vaccine <- c(""yes"",""no"",""no"")"
+"0","salk<- data.frame(m,y,consent,vaccine)"
+"0","salk"

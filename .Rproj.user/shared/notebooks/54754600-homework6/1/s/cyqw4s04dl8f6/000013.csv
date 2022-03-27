@@ -1,0 +1,6 @@
+"0","case2001 = case2001"
+"0","library(ggplot2)"
+"0","ggplot(case2001, aes(x = Status, y = Age)) +"
+"0"," geom_boxplot() +"
+"0","facet_wrap(~Sex) + "
+"0"," coord_flip()"

@@ -1,0 +1,2 @@
+"0","case1002_lm <- lm(log(Energy) ~ log(Mass) + Type, data=case1002)"
+"0","kable(tidy(case1002_lm))"

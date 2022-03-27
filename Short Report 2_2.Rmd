@@ -1,0 +1,82 @@
+---
+title: "Short Report 2"
+author: "Name: Bridger Rives & Victor Huang"
+output: pdf_document
+---
+```{r, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, prompt=TRUE, comment=NULL)
+
+library(broom)
+library(car)
+library(dplyr)
+library(ggplot2)
+library(ggResidpanel)
+library(knitr)
+library(tidyr)
+library(skimr)
+library(Sleuth3)
+```
+
+```{r}
+pollution <- ex1217
+head(pollution)
+pollution
+```
+
+```{r, fig.width=24, fig.height=24}
+pollution_lm <- lm(Mortality ~ Precip + Humidity + JanTemp + JulyTemp + 
+                     Over65 + House + Educ +Sound + Density + NonWhite +
+                     WhiteCol + Poor + HC + NOX + SO2, data = pollution)
+
+pollution_lm2 <- lm(Mortality ~ Precip + Humidity + JanTemp + JulyTemp + 
+                     Over65 + House + Educ +Sound + Density + NonWhite +
+                     WhiteCol + Poor + HC + NOX + SO2, data = pollution, subset = -c(1, 3, 8, 19, 48, 56))
+
+resid_xpanel(pollution_lm)
+resid_xpanel(pollution_lm2)
+```
+
+```{r, fig.width=24, fig.height=24}
+pollution_lm2 %>%
+  #mutate_at(.vars = c("BodyWt", "BrainWt", "Life", "GP", "TS"), 
+       #     .funs = log) %>%
+  ggpairs(columns = c("Mortality", "Precip", "Humidity", "JanTemp","JulyTemp",
+                      "Over65", "House", "Educ", "Sound","Density", "NonWhite",
+                      "WhiteCol", "Poor", "NOX","SO2", "HC"), 
+        lower = list(continuous =  wrap("smooth", se = FALSE)), 
+        columnLabels = c("Mortality", "Precip", "Humidity", "JanTemp","JulyTemp",
+                      "Over65", "House", "Educ", "Sound","Density", "NonWhite",
+                      "WhiteCol", "Poor", "NOX","SO2", "HC"))
+
+```
+
+
+```{r, fig.width=24, fig.height=24}
+pollution_4 <- transform(pollution, subset = -c(1, 3, 8, 19, 48, 56))
+
+pollution_4 %>%
+  select(-Mortality) %>%
+  mutate(across(.cols = c("JanTemp", "Density", "NonWhite", "Poor", "HC", "NOX", "SO2"), .fns = log)) %>%
+  ggpairs(columns = c("Precip", "Humidity", "JanTemp","JulyTemp",
+                      "Over65", "House", "Educ", "Sound","Density", "NonWhite",
+                      "WhiteCol", "Poor", "NOX","SO2", "HC"), 
+        lower = list(continuous =  wrap("smooth", se = FALSE)), 
+        columnLabels = c("Precip", "Humidity", "Log(JanTemp)","JulyTemp",
+                      "Over65", "House", "Educ", "Sound","Log(Density)", "Log(NonWhite)",
+                      "WhiteCol", "Log(Poor)", "Log(NOX)","Log(SO2)", "Log(HC)"))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

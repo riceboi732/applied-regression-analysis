@@ -1,0 +1,1 @@
+"0","boxplot(farms92 ~ region, data = agstrat2, horizontal=TRUE, main=""Number of farms (1992) by region"", ylab = ""region"", xlab = ""# of farms per county in 1992"")"

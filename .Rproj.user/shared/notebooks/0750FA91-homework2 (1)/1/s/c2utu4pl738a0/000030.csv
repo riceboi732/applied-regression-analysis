@@ -1,0 +1,5 @@
+"0","new_Time <- filter(ex0327,DurationOfVisit < 31)"
+"0","ggplot(new_Time, aes(x = DurationOfVisit, y = PollenRemoved)) +"
+"0","  geom_point()  +"
+"0","  geom_hline(yintercept = 0, linetype = ""dashed"") + "
+"0","  labs(y = ""residuals"", title = ""Residual plot"")"

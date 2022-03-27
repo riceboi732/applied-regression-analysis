@@ -1,0 +1,2 @@
+"0","# data for HW 1"
+"0","agstrat <- read.csv(""http://people.carleton.edu/~kstclair/data/agstrat.csv"")"

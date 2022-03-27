@@ -1,0 +1,295 @@
+---
+title: "Stat 230 HW 6"
+author: 'Name: Victor Huang'
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+```{r, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, prompt=FALSE, comment=NULL, warning = FALSE, message = FALSE)
+library(Sleuth3)
+library(ggplot2)
+library(ggResidpanel)
+library(dplyr)
+library(broom)
+library(knitr)
+```
+
+
+### worked with: No one
+
+
+Homework 6 is due **by 3pm Thursday, Oct. 4**. Please complete the assignment in this Markdown document, filling in your answers and R code below.  I didn't create answer and R chunk fields like I did with homework 1, but please fill in your answers and R code in the same manner as hw 1.  Submit  a hard copy of the **compiled pdf or word doc** either
+
+  - in class 
+  - in drop-in office hours 
+  - in the paper holder outside my CMC 222 office door
+
+Tips for using Markdown with homework sets:
+
+- Work through a problem by putting your R code into R chunks in this .Rmd. Run the R code to make sure it works, then knit the .Rmd to verify they work in that environment.
+    - Make sure you load your data in the .Rmd and include any needed `library` commands. 
+- Feel free to edit or delete  questions, instructions, or code provided in this file when producing your homework solution. 
+- For your final document, you can change the output type from `html_document` to `word_document` or `pdf_document`. These two to output types are better formatted for printing. 
+  - on maize: you may need to allow for pop-ups from this site 
+- If you want to knit to pdf while running Rstudio from your computer (*not* from maize), you  will need a LaTeX compiler installed on your computer. This could be [MiKTeX](https://miktex.org/), [MacTeX](http://www.tug.org/mactex/) (mac), or TinyTex. The latter is installed in R: first install the R package `tinytex`, then run the command `tinytex::install_tinytex()` to install this software. 
+  - If you are using maize, you don't need to install anything to knit to pdf!
+
+
+--------------------------------------------
+
+## Problem 1:   Donner Ch.20 Exercise 9
+Just use the estimated log odds model **given in this exercise** to answer the question "by hand" (*don't* fit the model in R and use the predict command). **Show all formulas and worked needed to derive your answers.**
+
+a.
+$$
+logodds_{females} = 3.2 - 0.078(age),logodds_{males} = 1.6 - 0.078(age)
+$$
+$\hat \pi(females = 25) = \frac{e^{3.2 - 0.078(25)}}{1 + e^{3.2 - 0.078(25)}} = 0.777$
+\newline
+$\hat \pi(males = 25) = \frac{e^{1.6 - 0.078(25)}}{1 + e^{1.6 - 0.078(25)}} = 0.413$
+\newline
+$\hat \pi(females = 50) = \frac{e^{3.2 - 0.078(50)}}{1 + e^{3.2 - 0.078(50)}} = 0.332$
+\newline
+$\hat \pi(males = 50) = \frac{e^{1.6 - 0.078(50)}}{1 + e^{1.6 - 0.078(50)}} = 0.091$
+\newline
+\newline
+b.
+$\frac{e^{3.2 - 0.078(age)}}{1 + e^{3.2 - 0.078(age)}} = 0.5$
+\newline
+$e^{3.2 - 0.078(age)} = 1$ (to get $\frac{1}{2}$ we have to make sure the denominator is two and the numerator is 1. As such, we can set the $\hat \pi$ term equal to 1)
+\newline
+$3.2 - 0.078(age) = ln(1)$
+\newline
+$-0.078(age) = 0 - 3.2$
+\newline
+$-0.078(age) = -3.2$
+\newline
+$age = \frac{-3.2}{-0.078}$
+\newline
+$age = 41$ (females)
+\newline
+\newline
+$\frac{e^{1.6 - 0.078(age)}}{1 + e^{1.6 - 0.078(age)}} = 0.5$
+\newline
+$e^{1.6 - 0.078(age)} = 1$ (to get $\frac{1}{2}$ we have to make sure the denominator is two and the numerator is 1. As such, we can set the $\hat \pi$ term equal to 1)
+\newline
+$1.6 - 0.078(age) = ln(1)$
+\newline
+$-0.078(age) = 0 - 1.6$
+\newline
+$-0.078(age) = -1.6$
+\newline
+$age = \frac{-1.6}{-0.078}$
+\newline
+$age = 20.5 \approx 21$ (males)
+\newline
+
+---------------------------------------
+
+
+## Problem 2: Donner interaction
+A comment in section 20.6.1 suggests that there may be a weak interaction between sex and age in the donner data. Let's explore that further. The data for this example is `case2001`.
+
+### (2a) Use `ggplot2` to create a boxplot of `Age` by `Status` that is faceted by `Sex`.  Explain why this graph is suggestive of a possible interactive effect of `Sex` and `Age`.
+
+```{r}
+case2001 = case2001
+library(ggplot2)
+ggplot(case2001, aes(x = Status, y = Age)) +
+ geom_boxplot() +
+facet_wrap(~Sex) + 
+ coord_flip()
+```
+Looking at the pair of boxplots above, we can clearly see that there is a difference between the average death age for males and female with the average male death age being approx. 28 years old and the average female death age being approx. 45 years old (there is a larger gap between in age of survived and age of dead for females and male). This would be explained by the existence of and interactive effect between Sex and Age. 
+
+### (2b) Fit the logistic regression of survival status on age, sex and the interaction of age and sex. Give the estimated effect for the interaction and the p-value (based on the Wald z test) for the interaction term.
+
+```{r}
+case2001_glm <- glm(Status ~ Age*Sex, family = binomial, data = case2001)
+tidy(case2001_glm)
+```
+$\hat \eta = 7.2463848 - 0.1940741(Age) - 6.9280495(SexMale) + 0.1615969(Age)(SexMale)$
+\newline
+$H_{0}: \beta_{3} = 0; H_{A}: \beta_{3} \neq 0}$
+\newline
+$z-stat = \frac{0.1615969 - 0}{0.09426191} = 1.714339$
+$p-value = 2 * P(Z < -1.714339) = 0.08646648$
+```{r}
+2*pnorm(-1.714339)
+```
+We get an estimated effect of 0.1615969, after going through the calculations shown above, we get a p-value of 0.08646648.
+
+### (2c) Conduct a drop-in-deviance test for the interaction term. Give the p-value for this test and compare it to the Wald test p-value. Does you conclusion about the significance of the interaction term change? Explain. (Moral: as noted in comment 1 on pages 616-617, you should trust the drop in deviance test more than the Wald test.)
+
+$H_{0}: \hat \eta = 7.2463848 - 0.1940741(Age) - 6.9280495(SexMale); H_{A}: \hat \eta = 7.2463848 - 0.1940741(Age) - 6.9280495(SexMale) + 0.1615969(Age)(SexMale)$
+
+```{r}
+case2001_reduced_glm <- glm(Status ~ Age + Sex, family = binomial, data = case2001)
+case2001_glm <- glm(Status ~ Age*Sex, family = binomial, data = case2001)
+anova(case2001_reduced_glm, case2001_glm, test = "Chisq")
+```
+Looking at the anova test we get a p-value of 0.048, this is significantly smaller (and more significant) than the Wald Test (p-value = 0.08646648). Taking the drop-in-deviance test over the Wald test, we get p = 0.048. Now, since the p-value is smaller than 0.05, we can reject the null hypothesis and conclude that the interactive term between sex and age is indeed significant.
+
+### (2d) Using the regression of survival status on age, sex and the interaction of age and sex, what is the change in the odds of survival for a one year increase in age for females? Compute a 95% confidence interval for this effect.
+
+```{r}
+case2001_glm <- glm(Status ~ Age*Sex, family = binomial, data = case2001)
+tidy(case2001_glm, conf.int = TRUE)
+```
+$\hat \eta = 7.2463848 - 0.1940741(Age) - 6.9280495(SexMale) + 0.1615969(Age)(SexMale)$
+\newline
+$odds(age + 1) = e^{7.2463848 - 0.1940741(Age + 1) - 6.9280495(0) + 0.1615969(Age)(0)} = e^{-0.1940741}e^{7.2463848 - 0.1940741(Age)}$
+\newline
+```{r}
+exp(-0.1940741)
+exp(c(-0.427958905, -0.05689585))
+100*(exp(-0.1940741) - 1)
+100*(exp(-0.1940741 + c(-1,1)*qnorm(0.975)*0.08741539)-1)
+```
+\newline
+The change in odds associated with a 1 year increase in age would be $e^{-0.1940741} = 0.8236$ (while holding all other variables constant). We have an odds ratio of 0.8236 (1 - 0.8236 = 0.1764), meaning for every year older a female gets, the odds of survival decrease by 17.64% (95% CI 2.248641%, 30.608452%).
+
+### (2e) Using the regression of survival status on age, sex and the interaction of age and sex, what is the change in the odds of survival for a one year increase in age for males? Compute a 95% confidence interval for this effect. Use this CI to determine if the effect of age on survival is statistically significant for men. (Hint: you are estimating the linear combination $\beta$'s so you will need to use the `vcov` command to compute your SE.)
+
+$e^{7.2463848 - 0.1940741(Age + 1) - 6.9280495(1) + 0.1615969(Age + 1)(1)} = e^{-0.1940741}e^{0.1615969}e^{7.2463848 - 0.1940741(Age) - 6.9280495(1) + 0.1615969(Age)(1)}$
+\newline
+$e^{-0.1940741}e^{0.1615969} = 0.9680445$\
+```{r}
+vcov(case2001_glm)
+se <- sqrt(0.007641451 + 0.008885308 + 2* -0.007641451)
+upper <- 0.19407 + 0.16160 + 1.96*se 
+lower <- 0.19407 + 0.16160 - 1.96*se
+exp(upper) - 1
+exp(lower) - 1
+```
+A one year increase in age is associated with a 3.195% decrease in the odds of survival for males. We are 95% confident that a one year increase in age is associated with a -9.661% to 3.734$ change in the odds of survival for males. This confidence interval suggests that the effect of age on survival is not statistically significant for males as the CI contains 0.
+
+### (2f) Compute and interpret the odds ratio for survival for females vs. males who are all 30 years old. Repeat this calculation and interpretation for females vs. males who are 40 years old.
+
+The odds for a 30 year old female is 8.005 times the odds of survival for a 30 year old male. The odds for a 40 year old female is 1.590 the odds of survival for a 40 year old male.
+
+$ \frac{e^{7.2463848 - 0.1940741(Age)}}{e^{7.2463848 - 0.1940741(Age) - 6.9280495(SexMale) + 0.1615969(Age)(SexMale)}} = \frac{1}{e^{-6.9280495(SexMale) + 0.1615969(Age)(SexMale)}}$
+\newline
+$\frac{1}{e^{-6.9280495(1) + 0.1615969(30)(1)}} = 0.1249123, \frac{1}{e^{-6.9280495(1) + 0.1615969(40)(1)}} = 1.590699$
+
+---------------------------------------
+
+
+## Problem 3:  Moose Sightability
+The data file `sightability.csv` (linked [here](http://people.carleton.edu/~kstclair/data/sightability.csv)) contains data from sightability flights conducted by the Minnesota Department of Natural Resources (MN DNR) during 2005-2007 in northeastern Minnesota. Workers from the DNR would fly over a location that was known to contain a radio collared moose and they would record whether or not they observed the moose, or moose group, below them. This response is given by the variable *observed* with `1` indicating that they did see the moose and 0 indicating that they were unable to sight the moose. Their goal is to model the probability of sighting a moose during one fly over of the location. Along with this sight indicator, they also record  weather and ground cover characteristics that might affect their probability of sighting the moose. Some of these variables are: 
+
+- `snowdepth` ($<8, 8-16, >16$ inches), 
+- `wind` (wind speed in miles/hour), 
+- `tempf` (temp in Farenheit), `cloud` (categorized % cloud cover), 
+- `grpsize` (number of moose in the group containing the radio collared moose), 
+- `voc` (visual obstruction cover given as a %), 
+- `suco` (survey conditions good or marginal/poor). 
+
+Group size is determined for all radio collared moose (sometimes with a second fly over), even if they weren't seen in the initial fly over that determined the `observed` status of the moose. `voc` is basically telling you how much vegatation was in the fly over area with more vegetation often making the moose harder to see by the observers in the plane. `suco` is a subjective measure that assesses light and shadow conditions for a given flight. The goal of this problem is to construct your own model that can be used to model the probability of sighting a moose.
+
+(Why is this an interesting data set? The goal of these sightability flights is to give the MN DNR a model they can use during their annual winter moose surveys in northern Minnesota. These surveys are used to track the health and abundance of all moose in northern Minnesota, not just to track the radio collared moose. During this survey, pilots fly over randomly selected plots and count the number of moose that they sight, and measure  many of the explanatory variables measured in the sightability study. They then use the sightability model constructed from the radio collar study to adjust their survey counts to account for all the moose that they likely did not see due high voc, among other factors. Click [here](http://www.dnr.state.mn.us/moose/index.html) for more info about this research.)
+
+```{r}
+sight <- read.csv("http://people.carleton.edu/~kstclair/data/sightability.csv")
+```
+
+### (3a)  None of the quantitative variables need transformations. Verify this fact for the variable `voc` by computing the sample proportion and log odds for each level of voc (voc of $0, 5, 10, \dotsc, 95, 100$). Plot the sample log odds vs. the unique values of voc to verify that the plot is roughly linear (satisfying model logit linearity assumption). 
+
+Hint: Since `voc` is a discrete measure, we can `group_by` it and compute the probability and log odds of success within each group. Use the `sight.logOdds` data frame to make your log odds plot:
+```{r}
+library(dplyr)
+sight.logOdds <- sight %>%
+  group_by(voc) %>% 
+  summarize(prob = mean(observed), logOdds = log(prob/(1-prob)))
+
+ggplot(sight.logOdds, aes(x = voc, y = logOdds)) + geom_point() + geom_smooth(method = "lm", se = FALSE)
+```
+
+
+### (3b)   Fit the regression of observed on snowdepth, wind, tempf, cloud, grpsize, voc, and suco. Test the significance of cloud cover in this model.
+
+```{r}
+sight_logit <- glm(observed ~ snowdepth + wind + tempf + cloud + grpsize + voc + suco, family = binomial, data = sight)
+summary(sight_logit)
+
+```
+
+### (3c)  Starting with your part (b) model, use backwards selection to find the most significant predictors of sightability. You **do not(!)** need to check for assumptions or outliers. (The assumptions seem to be met and there are no unusually influential cases.) You **do** need to give a step-by-step description of your model selection, including hypotheses and p-values given at each step to justify the elimination of each variable you throw out.
+
+```{r}
+new1_glm <- glm(observed ~ snowdepth + wind + tempf + cloud + grpsize + voc, family = binomial, data = sight)
+new2_glm <- glm(observed ~ snowdepth + wind + tempf + cloud + grpsize, family = binomial, data = sight)
+new3_glm <- glm(observed ~ snowdepth + wind + tempf + cloud, family = binomial, data = sight)
+new4_glm <- glm(observed ~ snowdepth + wind + tempf, family = binomial, data = sight)
+new5_glm <- glm(observed ~ snowdepth + wind, family = binomial, data = sight)
+new6_glm <- glm(observed ~ snowdepth, family = binomial, data = sight)
+anova(new1_glm, sight_logit, test="Chisq")
+anova(new2_glm, sight_logit, test="Chisq")
+anova(new3_glm, sight_logit, test="Chisq")
+anova(new4_glm, sight_logit, test="Chisq")
+anova(new5_glm, sight_logit, test="Chisq")
+anova(new6_glm, sight_logit, test="Chisq")
+```
+
+Looking at the p-values for each backward selection step, we see that we can drop everything but the voc variable, only voc has a significant p-value (p = 2.48e-05)
+
+### (3d) The MN DNR concluded that voc is the most important predictor of sightability (if your results for part (c) disagree, you may want to redo your model selection!). Use your ``best" model from part (c) to determine how increasing voc by 5 percentage points will effect the odds of sighting a moose. Also give a 95% confidence interval for this effect.
+
+```{r}
+summary(new6_glm)
+confint(new6_glm)
+exp(-0.05082098 * 5)
+exp(-0.02025314 * 5)
+```
+Looking at the calculations above, we see that a 5 percent increase in voc results in a 0.840331 multiplicative change in the odds. Thus, decreasing odds by approx. 16%. We are 95% confident that a 5 percent change in moose sighting odds would be a factor between the values of 0.7756104, 0.9036929.
+-------------------------------------
+
+## Problem 4: Tire failure on Ford Explorers (ch. 20 exercise 18) 
+Read the data set description for exercise 18, then use the data provided  (`ex2018`) to answer the following questions.
+
+
+### (4a)  The textbook also suggests an interaction between vehicle type (`Make`) and number of `Passengers`. To explore this interaction, create a side-by-side boxplot of `Passengers` by `Cause` that is faceted by `Make`. Carefully explain why this graph suggests that we should add the interaction between vehicle type and number of Passengers in the model for odds of tire failure.
+
+```{r}
+ex2018 = ex2018
+library(ggplot2)
+ggplot(ex2018, aes(x = Passengers, y = Cause)) +
+ geom_boxplot() +
+facet_wrap(~Make)
+```
+Looking at the pair of boxplots above, we can clearly see that there is a difference between the average tire failure passenger count for Ford and other cars with the average Ford tire failure passenger count being approx. 3 passengers and the average other model tire failure passenger count being approx. less than 1 passenger (there is a larger gap between passenger count of with-tire and without-tire failure for Ford and other models). This would be explained by the existence of and interactive effect between vehicle type and passenger.
+
+### (4b)  Fit the logistic regression of cause on age, age$^2$, number of passengers, vehicle make, and the interaction of passengers and make. Write down the fitted equation for Fords and non-Ford vehicles.
+
+```{r}
+ex2018_glm <- glm(Cause ~ VehicleAge + I(VehicleAge^2) + Passengers*Make, family = binomial, data = ex2018)
+tidy(ex2018_glm)
+```
+$logit(Tire) = -10.8474912 + 3.4211526(VehicleAge) - 0.3961082(VehicleAge^2) + 0.8393122(Passengers)$
+\newline
+$logit(Tire) = -10.8474912 + 3.4211526(VehicleAge) - 0.3961082(VehicleAge^2) + 0.8393122(Passengers) - 1.5321682(MakeOther) - 0.6359625(Passengers)(MakeOther)$
+
+### (4c)  What is the effect of vehicle type on the odds of tire failure? Give your answer as an odds ratio formula involving model cofficient estimates and the variable passengers. Clearly state what the odds ratio is measuring (odds of ? for group ? vs. ?). (Note: this answer will be an equation involving passengers. You will get actual odds ration numbers in part d.)
+
+$odds = \frac{e^{-10.8474912 + 3.4211526(VehicleAge) - 0.3961082(VehicleAge^2) + 0.8393122(Passengers)}}{e^{-10.8474912 + 3.4211526(VehicleAge) - 0.3961082(VehicleAge^2) + 0.8393122(Passengers) - 1.5321682(MakeOther) - 0.6359625(Passengers)(MakeOther)}}$
+\newline
+$odds = \frac{1}{e^{-1.5321682(MakeOther) - 0.6359625(Passengers)(MakeOther)}}$
+\newline
+$odds(Ford) = \frac{1}{e^{-1.5321682 - 0.6359625(Passengers)}}$
+
+### (4d) Compute the odds ratio from part (c)  for passenger levels of 0, 1, 2, 3, and 4 passengers. Explain what these odds ratios tell you about tire-related accidents, vehicle type and number of passengers.
+
+$odds(Ford|Passengers = 0) = \frac{1}{e^{-1.5321682 - 0.6359625(0)}} = \frac{1}{0.2160667} = 4.6282$
+\newline
+$odds(Ford|Passengers = 1) = \frac{1}{e^{-1.5321682 - 0.6359625(1)}} = \frac{1}{0.1143912} = 8.741931$
+\newline
+$odds(Ford|Passengers = 2) = \frac{1}{e^{-1.5321682 - 0.6359625(2)}} = \frac{1}{0.2160667} = 16.51209$
+\newline
+$odds(Ford|Passengers = 3) = \frac{1}{e^{-1.5321682 - 0.6359625(3)}} = \frac{1}{0.2160667} = 31.1887$
+\newline
+$odds(Ford|Passengers = 4) = \frac{1}{e^{-1.5321682 - 0.6359625(4)}} = \frac{1}{0.2160667} = 58.9104$
+\newline
+\newline
+The tire-related accidents odds ratio on Ford vs. other models multiplicative increase of $e^{-0.6359625} with every additional passenger.

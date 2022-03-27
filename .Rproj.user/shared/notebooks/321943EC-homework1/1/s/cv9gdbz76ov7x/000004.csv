@@ -1,0 +1,4 @@
+"0","library(ggplot2)"
+"0","ggplot(agstrat2, aes(x=farms92)) + geom_histogram() + facet_wrap(~region) + labs(title = ""Number of farms by region"")"
+"2","`stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+"

@@ -1,0 +1,6 @@
+"0","ggplot(chall, aes(x = temperature, y = damaged)) +"
+"0","  geom_point() + "
+"0","  geom_smooth(method=""lm"", se=FALSE, color=""red"") + "
+"0","  geom_jitter(height = .05)"
+"2","`geom_smooth()` using formula 'y ~ x'
+"

@@ -1,0 +1,132 @@
+---
+title: "Stat 230 HW 8"
+author: "Name: Victor Huang"
+output: pdf_document
+---
+```{r, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, prompt=TRUE, comment=NULL, message  = FALSE, warning = FALSE)
+library(Sleuth3)
+library(ggplot2)
+library(ggResidpanel)
+library(dplyr)
+library(broom)
+library(knitr)
+library(gridExtra)
+library(forcats)
+```
+
+Homework 8 is due **by 3pm Thursday, Nov 18**. Please complete the assignment in this Markdown document, filling in your answers and R code below.  I didn't create answer and R chunk fields like I did with homework 1, but please fill in your answers and R code in the same manner as hw 1.  Submit  a hard copy of the **compiled pdf or word doc** either
+
+  - in class 
+  - in drop-in office hours 
+  - in the paper holder outside my CMC 222 office door
+
+Tips for using Markdown with homework sets:
+
+- Work through a problem by putting your R code into R chunks in this .Rmd. Run the R code to make sure it works, then knit the .Rmd to verify they work in that environment.
+    - Make sure you load your data in the .Rmd and include any needed `library` commands. 
+- Feel free to edit or delete  questions, instructions, or code provided in this file when producing your homework solution. 
+- For your final document, you can change the output type from `html_document` to `word_document` or `pdf_document`. These two to output types are better formatted for printing. 
+  - on maize: you may need to allow for pop-ups from this site 
+- If you want to knit to pdf while running Rstudio from your computer (*not* from maize), you  will need a LaTeX compiler installed on your computer. This could be [MiKTeX](https://miktex.org/), [MacTeX](http://www.tug.org/mactex/) (mac), or TinyTex. The latter is installed in R: first install the R package `tinytex`, then run the command `tinytex::install_tinytex()` to install this software. 
+  - If you are using maize, you don't need to install anything to knit to pdf!
+ 
+
+
+-------------------------------------
+
+## Problem 1: USGS Rake data
+Consider the rake data used in the day 23 [quasi-binomial worksheet](https://kstclair.github.io/stat-230/Rhandouts/day23_QuasiBinom.pdf). 
+
+```{r}
+RakeData <- read.csv("http://people.carleton.edu/~kstclair/data/RakeData.csv")
+summary(RakeData)
+```
+
+### (1a) Fit the regular (no quasi-) binomial model that was fit in the day 23 quasi-binomial worksheet: the binomial regression of $y$ on log of biomass, site substrate and site depth. Plot the deviance residuals against fitted values for this model  and give the row numbers of the three cases with the most extreme residual deviance values. What are the response values for these cases? Are these cases over- or underestimated? 
+
+```{r}
+rake_glm_binom <- glm(SiteRake/SiteM ~ log(SiteBiom + 1) + SiteDepth + SiteSub, family = binomial, weights = SiteM, data = RakeData)
+rake_aug <- augment(rake_glm_binom, type.residuals = "deviance")
+rake_aug %>% arrange(desc(.resid))
+rake_aug %>% slice_max(abs(.resid), n = 3)
+plot(rake_glm_binom, which = 1)
+```
+The three most extreme cases have rows 25, 3, and 16. With response values 0, 0.333, and 0.333. They are all underestimated
+
+### (1b) Look at the Cook's distance measure for the regular binomial model. Which case has the highest value? Determine why these cases have high Cook's distance values. 
+
+```{r}
+plot(rake_glm_binom)
+resid(rake_glm_binom)
+rake_aug %>% arrange(desc(.cooksd))
+rake_aug %>% slice_max(.cooksd, n = 1)
+```
+The highest cook's distance is the 26 row. This can be caused by it having a high standard residual.
+
+### (1c) Refit the regular binomial model without the *three cases from part (a)*. Run the goodness-of-fit test. Explain why the results of this test change compared to the results of the GOF test with all cases (done in the day 22 markdown)?
+
+```{r}
+rake_new_glm <- update (rake_glm_binom, subset = c(-3, -25, -16))
+p1 <- 1-pchisq(15.557, df = 20)
+```
+Ater removing the three cases we get a high p-value. This means that our original model was good and the change is caused by the removing the three outliers. 
+
+### (1d) Refit the regular binomial model without the *one case from part (b)* but including the three cases from part (c). Run the goodness-of-fit test. Explain why the GOF test from (c) suggests that the model is adequate (with the 3 unusual residual cases removed) but the test in (d) is not adequate (with the highest Cook's distance case removed).
+
+```{r}
+rake_new_glm2 <- update (rake_glm_binom, subset = c(-26))
+p2 <- 1-pchisq(44.886, df = 22)
+```
+Since the p-value is significantly small. The original model proves to be inadequate due to the three outliers being removed in the last question
+----------------------------------------
+
+
+## Problem 2: Galapagos: ch. 22 exercise 18
+The data set is `ex1220`. **In addition** to parts (a)-(c):
+
+- use a **deviance residual plot** to verify your GOF conclusions in part (a) (remember that most residuals are between $+/- 2$ if the model fits well) 
+
+- and use a **quasi-Poisson** model for (b)-(c) if your GOF test suggests that it is needed.
+
+```{r}
+ex1220 <- ex1220
+ex1220_glm <- glm(Native ~ log(Area) + log(Elev) + log(DistNear) + log(AreaNear), family = quasipoisson(), data = ex1220)
+summary(ex1220_glm)
+1 -pchisq(95.764, df = 25)
+ex1220_glm2 <- glm(Native ~ log(Area) + log(DistNear) + log(AreaNear), family = quasipoisson(), data = ex1220)
+summary(ex1220_glm2)
+1 -pchisq(96.448, df = 26)
+ex1220_glm3<- glm(Native ~ log(Area) + log(Elev) + log(AreaNear), family = quasipoisson(), data = ex1220)
+summary(ex1220_glm3)
+1 -pchisq(104.08, df = 26)
+```
+
+We get p-values of 3.210995e-10. We find that we can get rid of log(Elev) and log(DistNear). If we double area, it would ahve a multiplicative change of 0.966, holding all other terms constant.
+-----------------------------------------
+
+
+## Problem 3: El Nino and Hurricanse: ch. 22 exercise 21 
+Data is `ex1028`. In addition to answering the questions for this exercise, add the following: 
+
+- For both models (a) and (b), interpret the effect of the El Nino temperature on the response as it changes from cold to neutral and cold to warm and explain whether these effects are significant. Be careful to use the `ElNino` variable in data set `ex1028` rather than `Temperature`. 
+
+- You should also recode the `WestAfrica` variable (0 = dry and 1 = wet) to make it a factor variable with wet/dry levels. 
+
+```{r}
+ex1028 <- ex1028
+ex1028$WestAfrica <- fct_recode(factor(ex1028$WestAfrica), 
+                               "wet" = "1",
+                               "dry" = "0")
+#a
+
+ex1028_glm<- glm(Storms ~ ElNino, family = quasipoisson(), data = ex1028)
+summary(ex1028_glm)
+1 -pchisq(35.990, df = 47)
+
+#b
+ex1028_glm<- glm(Hurricanes ~ ElNino + WestAfrica, family = quasipoisson(), data = ex1028)
+summary(ex1028_glm)
+1 -pchisq(27.322, df = 44)
+```
+Looking at the model coefficients, for (a) we see that going from cold to neutral will result in a multiplicative change of0.8932578. And going from cold to warm will result in a multiplicative change of 0.6404463. For the second model we get cold to neutral and cold to warm as 0.9563513 and 0.6299845 respectively. Since we get a high p-value, we now that the model is adequate However, we can see that cold to neutral is not significant, but cold to warm is significant. 

@@ -1,0 +1,32 @@
+"0","knitr::opts_chunk$set(collapse=TRUE, "
+"0","                      message = FALSE, warning = FALSE)"
+"0","library(ggplot2)"
+"0","library(dplyr)"
+"0","library(tidyr)"
+"0","library(knitr)"
+"0","library(gridExtra)"
+"2","
+Attaching package: ‘gridExtra’
+
+"
+"2","The following object is masked from ‘package:dplyr’:
+
+    combine
+
+"
+"0","## entering summarized data ""by hand"""
+"0","data1 <- data.frame("
+"0","  WifeWork = c(""not working"", ""not working"", ""working"", ""working""), "
+"0","  HusbandWork = c(""not working"", ""working"", ""not working"", ""working""), "
+"0","  count= c(2410, 1894, 1025, 7044))"
+"0","plotA <- ggplot(data1, aes(x=HusbandWork, fill = WifeWork, y=count)) + "
+"0","  geom_bar(stat = ""identity"", position = ""fill"") + "
+"0","  labs(y=""proportion"")+ scale_fill_viridis_d()"
+"0",""
+"0","data2 <- data.frame("
+"0","  WifeWork = c(rep(""not working"",3), rep(""working"",3)), "
+"0","  WifeEduc = factor(rep(c(""no HS"", ""HS"", ""College""), 2), levels=c(""no HS"", ""HS"", ""College"")), "
+"0","  count= c(1792, 1455, 1057, 1672, 3352, 3045))"
+"0","plotB <- ggplot(data2, aes(x=WifeEduc, fill = WifeWork, y=count)) + "
+"0","  geom_bar(stat = ""identity"", position = ""fill"") + "
+"0","  labs(y=""proportion"" )+ scale_fill_viridis_d()"

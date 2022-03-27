@@ -1,0 +1,36 @@
+"0","anova(heart_glm2, heart_glm, test = ""Chisq"")
+"
+"1","Analysis of Deviance Table
+"
+"1","
+"
+"1","Model 1: HeartDisease ~ Sex + ChestPainType + RestingBP + Cholesterol + 
+    FastingBS + RestingECG + MaxHR + ExerciseAngina + Oldpeak + 
+    ST_Slope
+Model 2: HeartDisease ~ Age + Sex + ChestPainType + RestingBP + Cholesterol + 
+    FastingBS + RestingECG + MaxHR + ExerciseAngina + Oldpeak + 
+    ST_Slope"
+"1","
+"
+"1"," "
+"1"," Resid. Df"
+"1"," Resid. Dev"
+"1"," Df"
+"1"," Deviance"
+"1"," Pr(>Chi)"
+"1","
+1"
+"1","       903"
+"1","     595.77"
+"1","   "
+"1","         "
+"1","         "
+"1","
+2"
+"1","       902"
+"1","     594.19"
+"1","  1"
+"1","   1.5801"
+"1","   0.2087"
+"1","
+"

@@ -1,0 +1,166 @@
+---
+title: "Short Report 2"
+author: "Name: Bridger Rives & Victor Huang"
+output: pdf_document
+---
+```{r, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, prompt=TRUE, comment=NULL)
+
+library(broom)
+library(car)
+library(dplyr)
+library(ggplot2)
+library(ggResidpanel)
+library(knitr)
+library(tidyr)
+library(skimr)
+library(Sleuth3)
+```
+
+```{r}
+pollution <- ex1217
+head(pollution)
+```
+
+```{r}
+pollution_lm <- lm(Mortality ~ Precip + Humidity + JanTemp + JulyTemp + 
+                     Over65 + House + Educ +Sound + Density + NonWhite +
+                     WhiteCol + Poor + HC + NOX + SO2, data = pollution)
+
+#With an R^2 value of 0.723, we know that the variables in the model which are not types of pollution account for 72% of the variance. We can conclude that climate and socioeconomci status do not account for all of the variation.
+pollution_lm2 <- lm(Mortality ~ Precip + Humidity + JanTemp + JulyTemp + 
+                     Over65 + House + Educ +Sound + Density + NonWhite +
+                     WhiteCol + Poor, data = pollution)
+
+#The R^2 value did not change when we added the variable NOX
+pollution_lm3 <- lm(Mortality ~ Precip + Humidity + JanTemp + JulyTemp + 
+                     Over65 + House + Educ +Sound + Density + NonWhite +
+                     WhiteCol + Poor + NOX, data = pollution)
+
+#The R^2 value rose to 75.5% and the p-value of SO2 is signficant
+pollution_lm4 <- lm(Mortality ~ Precip + Humidity + JanTemp + JulyTemp + 
+                     Over65 + House + Educ +Sound + Density + NonWhite +
+                     WhiteCol + Poor + NOX + SO2, data = pollution)
+
+# The R^2 value rose again, although HC is not significant while SO2 and NOX are in the variable.
+pollution_lm5 <- lm(Mortality ~ Precip + Humidity + JanTemp + JulyTemp + 
+                     Over65 + House + Educ +Sound + Density + NonWhite +
+                     WhiteCol + Poor + NOX + SO2 + HC, data = pollution)
+
+pollution_lm5
+summary(pollution_lm5)
+```
+
+
+```{r, fig.width=24, fig.height=24}
+#ggplot(pollution_lm9) +
+pollution %>%
+  #mutate_at(.vars = c("BodyWt", "BrainWt", "Life", "GP", "TS"), 
+       #     .funs = log) %>%
+  ggpairs(columns = c("Mortality", "Precip", "Humidity", "JanTemp","JulyTemp",
+                      "Over65", "House", "Educ", "Sound","Density", "NonWhite",
+                      "WhiteCol", "Poor", "NOX","SO2", "HC"), 
+        lower = list(continuous =  wrap("smooth", se = FALSE)), 
+        columnLabels = c("Mortality", "Precip", "Humidity", "JanTemp","JulyTemp",
+                      "Over65", "House", "Educ", "Sound","Density", "NonWhite",
+                      "WhiteCol", "Poor", "NOX","SO2", "HC"))
+```
+
+```{r}
+### Began looking at covariance and removing variables for a smaller model with less noise interfering with the variables of interest. We decided to remove humidity, because humidity has a low p-value and highcovariance.
+#vif(pollution_lm)
+#tidy(pollution_lm, conf.int = TRUE) %>% kable(digits = 4)
+
+pollution_lm6 <- lm(Mortality ~ Precip + JanTemp + JulyTemp + 
+                     Over65 + House + Educ +Sound + Density + NonWhite +
+                     WhiteCol + Poor + HC + NOX + SO2, data = pollution)
+
+### Our new largest p-value is poor, which also has a high covariance, so we decided to remove it.
+#vif(pollution_lm6)
+#tidy(pollution_lm6, conf.int = TRUE) %>% kable(digits = 4)
+
+pollution_lm7 <- lm(Mortality ~ Precip + JanTemp + JulyTemp + 
+                     Over65 + House + Educ +Sound + Density + NonWhite +
+                     WhiteCol + HC + NOX + SO2, data = pollution)
+
+### The new largest p-value is sound, which also has enough covariance to merit removal.
+#vif(pollution_lm7)
+#tidy(pollution_lm7, conf.int = TRUE) %>% kable(digits = 4)
+
+pollution_lm8 <- lm(Mortality ~ Precip + JanTemp + JulyTemp + 
+                     Over65 + House + Educ + Density + NonWhite +
+                     WhiteCol + HC + NOX + SO2, data = pollution)
+
+### The new largest p-value is WhiteCol, which we removed.
+#vif(pollution_lm8)
+#tidy(pollution_lm8, conf.int = TRUE) %>% kable(digits = 4)
+
+pollution_lm9 <- lm(Mortality ~ Precip + JanTemp + JulyTemp + Over65 + House + 
+                    Educ + Density + NonWhite + HC + NOX + SO2, 
+                    data = pollution)
+
+#House and density have some covariance, so we removed density, which had the larger p-value
+#vif(pollution_lm9)
+#tidy(pollution_lm9, conf.int = TRUE) %>% kable(digits = 4)
+
+pollution_lm10 <- lm(Mortality ~ Precip + JanTemp + JulyTemp + Over65 + House + 
+                    Educ + NonWhite + HC + NOX + SO2, 
+                    data = pollution)
+
+### The only huge outlier on p-value which remains is Over65. This variable has a low covariance, but does not seem to be significantly correlated with mortality, so we removed it.
+#vif(pollution_lm10)
+#tidy(pollution_lm10, conf.int = TRUE) %>% kable(digits = 4)
+
+pollution_lm11 <- lm(Mortality ~ Precip + JanTemp + JulyTemp + House + Educ +
+                       NonWhite + HC + NOX + SO2, data = pollution)
+
+vif(pollution_lm11)
+tidy(pollution_lm11, conf.int = TRUE) %>% kable(digits = 4)
+```
+
+```{r}
+###This new summary's R^2 value shows that we have lost less than 1% of our explained variance whuile taking out 6 variables which did a poor job of explaining the variance. We are now running our test about pollutants over again.
+#summary(pollution_lm11)
+
+###This model explains 70.6% of the variance in mortality, without using any of the pollution variables.
+pollution_lm12 <- lm(Mortality ~ Precip + JanTemp + JulyTemp + House + Educ +
+                       NonWhite, data = pollution)
+#summary(pollution_lm12)
+
+###Adding pollutant HC to this model only raises the explained variance by .1% to 70.7%
+pollution_lm13 <- lm(Mortality ~ Precip + JanTemp + JulyTemp + House + Educ +
+                       NonWhite + HC, data = pollution)
+#summary(pollution_lm13)
+
+###Adding pollutant NOX raises the explained variance by 3.9% to 74.6%
+pollution_lm14 <- lm(Mortality ~ Precip + JanTemp + JulyTemp + House + Educ +
+                       NonWhite + HC + NOX, data = pollution)
+#summary(pollution_lm14)
+
+###Adding SO2 to this model raises the explained variance by an additional .6% to 75.2%.
+pollution_lm15 <- lm(Mortality ~ Precip + JanTemp + JulyTemp + House + Educ +
+                       NonWhite + HC + NOX + SO2, data = pollution)
+#summary(pollution_lm15)
+
+### Adding SO2 instead of NOX does not give a different increase to the model of only HC.
+pollution_lm16 <- lm(Mortality ~ Precip + JanTemp + JulyTemp + House + Educ +
+                       NonWhite + HC + SO2, data = pollution)
+#summary(pollution_lm16)
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

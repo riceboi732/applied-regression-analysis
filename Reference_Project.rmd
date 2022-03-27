@@ -1,0 +1,420 @@
+---
+title: "RegressionFinalProject"
+author: "Waleed Iftikhar, David Chu, Sameer Swarup"
+date: "20/11/2019"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(broom)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(knitr)
+library(gridExtra)
+library(GGally)
+library(car)
+library(dplyr)
+library(broom)
+```
+
+###Uploading the dataset and removing incomplete cases.
+```{r}
+ProjectData <- read.csv("~/Desktop/Documents in R/Math245/Final Project/Dataset.csv") %>% drop_na()
+```
+
+###Fitting the full model with all the predictors on the entire Dataset.
+
+```{r}
+full <- lm(price ~ neighbourhood_group+ latitude+longitude+ room_type+ minimum_nights + number_of_reviews+ availability_365 + reviews_per_month, data = ProjectData) 
+summary(full)
+crp(full)
+plot(full, which=4, id.n = 10)
+plot(full, which=5, id.n = 10)
+```
+
+###Trying out a log transformation on all quantitative predictors. Adding 1 to ensure that some of variables do no have zero values. 
+```{r}
+logfull <- lm(log(price+1) ~ neighbourhood_group+ log(latitude)+log(longitude)+ room_type+ log(minimum_nights) + log(number_of_reviews+1)+ log(availability_365+1) + log(reviews_per_month+1), data = ProjectData) 
+summary(logfull)
+crp(logfull)
+plot(logfull, which=4, id.n = 10)
+plot(logfull, which=5, id.n = 10)
+```
+
+###Trying out a different transformation on the availability365, minimum_nights, and reviews_per_month variable.
+```{r}
+logfull1 <- lm(log(price+1) ~ neighbourhood_group+ log(latitude)+log(longitude)+ room_type+ sqrt(minimum_nights) + log(number_of_reviews+1)+ log(1000-availability_365) + I(1/reviews_per_month+1), data = ProjectData) 
+summary(logfull1)
+crp(logfull1)
+plot(logfull1, which=4, id.n = 10)
+plot(logfull1, which=5, id.n = 10)
+```
+
+###Filtering the cases with Leverage > 0.03 and studentized residuals > 6
+```{r}
+logfull1.aug <- augment(logfull1)
+logfull1.aug
+filter(logfull1.aug, abs(.hat)>0.03)
+filter(logfull1.aug, abs(.std.resid)> 6)
+```
+
+###Decide to do a log transformation on all our quantitative variables because that satisifes our assumptions of linearity and constant variance to the greatest extent. 
+
+```{r}
+logfull1 <- lm(log(price+1) ~ neighbourhood_group+ log(latitude)+log(longitude)+ room_type+ log(minimum_nights) + log(number_of_reviews+1)+ log(1000-availability_365) + log(reviews_per_month+1), data = ProjectData) 
+crp(logfull1)
+plot(logfull1, which=4, id.n = 10)
+plot(logfull1, which=5, id.n = 10)
+```
+
+
+###Removing cases with high leverage and studentized residual values and checking their effect on coefficient values.
+
+```{r}
+summary(logfull)
+DataEdit <- ProjectData %>% slice(-1320,-2393,-2668,-2979,-3169)
+```
+
+###We deemed the effect on coefficient values to be significant enough to justify the removal of these outliers.
+
+```{r}
+logfull2 <- lm(log(price+1) ~ neighbourhood_group+ log(latitude)+log(longitude)+ room_type+ log(minimum_nights) + log(number_of_reviews+1)+ log(1000-availability_365) + log(reviews_per_month+1), data = DataEdit) 
+summary(logfull2)
+```
+
+###Looking at partial residual, leverage and Cook's distance plots.
+```{r}
+crp(logfull2)
+plot(logfull2, which=4, id.n = 10)
+plot(logfull2, which=5, id.n = 10)
+```
+
+###Checking again for cases with high leverage and studentized residual values.
+```{r}
+logfull2.aug <- augment(logfull2)
+logfull2.aug
+which(logfull2.aug$.hat>0.03)
+which(logfull2.aug$.std.resid> 6)
+which(logfull2.aug$.std.resid< -6)
+```
+
+###Removing cases with high leverage and studentized residual values and checking their effect on coefficient values..
+```{r}
+DataEdit1 <- DataEdit %>% slice(-1034,-1862,-2066,-2308,-2437)
+```
+
+```{r}
+logfull3 <- lm(log(price+1) ~ neighbourhood_group+ log(latitude)+log(longitude)+ room_type+ log(minimum_nights) + log(number_of_reviews+1)+ log(1000-availability_365) + log(reviews_per_month), data = DataEdit1) 
+summary(logfull3)
+```
+###We deemed the effect on coefficient values to be significant enough to justify the removal of these outliers.
+
+###Looking at partial residual, leverage and Cook's distance plots.
+```{r}
+crp(logfull3)
+plot(logfull3, which=4, id.n = 10)
+plot(logfull3, which = 2)   #Looking at the normal QQ plot. 
+plot(logfull3, which=5, id.n = 10)
+vif(logfull3)
+```
+
+###Removing cases with high leverage and studentized residual values and checking their effect on coefficient values..
+
+```{r}
+logfull3.aug <- augment(logfull3)
+which(logfull3.aug$.hat>0.015)
+which(logfull3.aug$.std.resid> 4)
+which(logfull3.aug$.std.resid< -4)
+DataEdit2 <- DataEdit1 %>% slice(-4963,-5127,-4618,-4411,-4122, -3515, -2803, -2054, -1967, -1369, -765, -536, -85, -84, -80, -31,-2600, -2591)
+```
+###We deemed the effect on coefficient values to be significant enough to justify the removal of these outliers.
+
+###Looking at partial residual, leverage and Cook's distance plots.
+
+```{r}
+logfull4 <- lm(log(price+1) ~ neighbourhood_group+ log(latitude)+log(longitude)+ room_type+ log(minimum_nights) + log(number_of_reviews+1)+ log(1000-availability_365) + log(reviews_per_month), data = DataEdit2) 
+summary(logfull4)
+
+crp(logfull4)
+plot(logfull4, which=4, id.n = 10)
+plot(logfull4, which = 2)   #Looking at the normal QQ plot. 
+plot(logfull4, which=5, id.n = 10)
+vif(logfull4)
+```
+
+##EDA for interactions
+
+```{r, fig.height=5, fig.width=10}
+#Interaction between `latitude` and `room_type`
+ggplot(DataEdit2, aes(x=log(latitude), y=log(price+1)))+ 
+   geom_point() + 
+   facet_wrap(~room_type) +
+   geom_smooth()+
+  labs(title= "Effect of the log(latitude):room_type interaction on log(price+1)")
+  
+#Potential interaction. Try out in model and see what happens.
+
+#Interaction between `availability_365` and `room_type`
+ggplot(DataEdit2, aes(x=log(1000-availability_365), y=log(price+1))) + 
+   geom_point() + 
+   facet_wrap(~room_type) +
+   geom_smooth()+
+  labs(title= "Effect of the log(1000-availability_365):room_type interaction on log(price+1)")
+#Not sure. Check for interaction and its statistical significance in the model.
+
+#Interaction between `number_of_reviews` and `room_type`
+ggplot(DataEdit2, aes(x=log(number_of_reviews+1), y=log(price+1))) + 
+   geom_point() + 
+   facet_wrap(~room_type) +
+   geom_smooth()+
+  labs(title= "Effect of the log(number_of_reviews+1):room_type interaction on log(price+1)")
+  
+#There is no apparent interaction between log(number_of_reviews+1) and log(price+1).
+
+#Interaction between `log(longitude)` and `room_type`
+ggplot(DataEdit2, aes(x= log(longitude) , y=log(price+1))) + 
+   geom_point() + 
+   facet_wrap(~room_type) +
+   geom_smooth()+
+  labs(title= "Effect of the log(longitude):room_type interaction on log(price+1)")
+#Not sure. Check for interaction and its statistical significance in the model.
+
+#Interaction between ` log(reviews_per_month)` and `room_type`
+ggplot(DataEdit2, aes(x= log(reviews_per_month), y=log(price+1))) + 
+   geom_point() + 
+   facet_wrap(~room_type) +
+   geom_smooth()+
+  labs(title= "Effect of the log(reviews_per_month):room_type interaction on log(price+1)")
+#Not sure. Check for interaction and its statistical significance in the model.
+```
+
+
+```{r}
+#Interaction between `latitude` and `neighbourhood group`
+ggplot(DataEdit2, aes(x=log(latitude), y=log(price+1)))+ 
+   geom_point() + 
+   facet_wrap(~neighbourhood_group) +
+   geom_smooth()+
+  labs(title= "Effect of the log(latitude):neighbourhood_group interaction on log(price+1)")
+#Interaction of location. Not relevant in our model.
+
+#Interaction between `availability_365` and `neighbourhood group`
+ggplot(DataEdit2, aes(x=log(1000-availability_365), y=log(price+1))) + 
+   geom_point() + 
+   facet_wrap(~neighbourhood_group) +
+   geom_smooth()+
+  labs(title= "Effect of the log(1000-availability_365):neighbourhood_group interaction on log(price+1)")
+#Lets try in the model. See what happens.
+
+#Interaction between `number_of_reviews` and `neighbourhood_group`
+ggplot(DataEdit2, aes(x=log(number_of_reviews+1), y=log(price+1))) + 
+   geom_point() + 
+   facet_wrap(~neighbourhood_group) +
+   geom_smooth()+
+  labs(title= "Effect of the log(number_of_reviews+1):neighbourhood_group interaction on log(price+1)")
+#Lets try in the model. See what happens.
+
+#Interaction between `log(longitude)` and `neighbourhood_group`
+ggplot(DataEdit2, aes(x=log(longitude), y=log(price+1))) + 
+   geom_point() + 
+   facet_wrap(~neighbourhood_group) +
+   geom_smooth()+
+  labs(title= "Effect of the log(longitude):neighbourhood_group interaction on log(price+1)")
+#Interaction of location. Not relevant in our model.
+
+#Interaction between `log(reviews_per_month)` and `neighbourhood_group`
+ggplot(DataEdit1, aes(x= log(reviews_per_month), y=log(price+1))) + 
+   geom_point() + 
+   facet_wrap(~neighbourhood_group) +
+   geom_smooth()+
+  labs(title= "Effect of the log(reviews_per_month):neighbourhood_group interaction on log(price+1)")
+#Lets try in the model. See what happens.
+```
+
+
+###Adding all the possible interactions to our full model. 
+
+```{r}
+interactfm <- lm(log(price+1) ~ neighbourhood_group+ log(latitude)+log(longitude)+ room_type+ log(minimum_nights) + log(number_of_reviews+1)+ log(1000-availability_365) + log(reviews_per_month)+ neighbourhood_group*log(minimum_nights) + neighbourhood_group*log(number_of_reviews+1) + neighbourhood_group*log(1000-availability_365) + neighbourhood_group*log(reviews_per_month)+ room_type* neighbourhood_group  + room_type* log(latitude) +room_type*log(longitude) +room_type*log(minimum_nights) +room_type*log(number_of_reviews+1) +room_type*log(1000-availability_365) +room_type*log(reviews_per_month) , data = DataEdit2) 
+summary(interactfm)
+anova(interactfm)
+vif(interactfm)
+anova(logfull4,interactfm)
+```
+
+###The p-value is almost close to zero. Thus, there a few interactions that statistically significant in the model
+
+#Checking for significance of interaction between room_type and log(reviews_per_month) 
+
+```{r}
+interactfm1 <- lm(log(price+1) ~ neighbourhood_group+ log(latitude)+log(longitude)+ room_type+ log(minimum_nights) + log(number_of_reviews+1)+ log(1000-availability_365) + log(reviews_per_month)+ neighbourhood_group*log(minimum_nights) + neighbourhood_group*log(number_of_reviews+1) + neighbourhood_group*log(1000-availability_365) + neighbourhood_group*log(reviews_per_month)+ room_type* neighbourhood_group  + room_type* log(latitude) +room_type*log(longitude) +room_type*log(minimum_nights) +room_type*log(number_of_reviews+1) +room_type*log(1000-availability_365) , data = DataEdit2) 
+summary(interactfm1) 
+anova(interactfm1)
+vif(interactfm1)
+anova(interactfm1,interactfm)
+```
+
+#The p-value is 0.08114. Thus, we have evidence that the interaction term is weakly significant in our model. Moreover, it only adds 0.04% to our R^2 value. Therefore, we remove it from our model.
+
+#Checking for significance of interaction between room_type and log(1000 - availability_365) 
+
+```{r}
+interactfm2 <- lm(log(price+1) ~ neighbourhood_group+ log(latitude)+log(longitude)+ room_type+ log(minimum_nights) + log(number_of_reviews+1)+ log(1000-availability_365) + log(reviews_per_month)+ neighbourhood_group*log(minimum_nights) + neighbourhood_group*log(number_of_reviews+1) + neighbourhood_group*log(1000-availability_365) + neighbourhood_group*log(reviews_per_month)+ room_type* neighbourhood_group  + room_type* log(latitude) +room_type*log(longitude) +room_type*log(minimum_nights) +room_type*log(number_of_reviews+1) , data = DataEdit2) 
+summary(interactfm2) 
+anova(interactfm2)
+vif(interactfm2)
+anova(interactfm2,interactfm1)
+```
+
+#The p-value is 0.01669. However, the VIF value for the interaction term is very large. In addition, adding the term does not increase the R^2 value by a significant amount. Therefore, we remove the interaction term from our model.
+
+#Checking for significance of interaction between room_type and log(number_of_reviews + 1)
+
+```{r}
+interactfm3 <- lm(log(price+1) ~ neighbourhood_group+ log(latitude)+log(longitude)+ room_type+ log(minimum_nights) + log(number_of_reviews+1)+ log(1000-availability_365) + log(reviews_per_month)+ neighbourhood_group*log(minimum_nights) + neighbourhood_group*log(number_of_reviews+1) + neighbourhood_group*log(1000-availability_365) + neighbourhood_group*log(reviews_per_month)+ room_type* neighbourhood_group  + room_type* log(latitude) +room_type*log(longitude) +room_type*log(minimum_nights), data = DataEdit2) 
+summary(interactfm3) 
+vif(interactfm3)
+anova(interactfm3,interactfm2)
+```
+
+#The p-value is 0.01438. In addition, the VIF value for the interaction term is not very big. Therefore, we keep the interaction term in our model.
+
+#Checking for significance of interaction between room_type and log(minimum_nights) 
+
+```{r}
+interactfm4 <- lm(log(price+1) ~ neighbourhood_group+ log(latitude)+log(longitude)+ room_type+ log(minimum_nights) + log(number_of_reviews+1)+ log(1000-availability_365) + log(reviews_per_month)+ neighbourhood_group*log(minimum_nights) + neighbourhood_group*log(number_of_reviews+1) + neighbourhood_group*log(1000-availability_365) + neighbourhood_group*log(reviews_per_month)+ room_type* neighbourhood_group  + room_type* log(latitude) +room_type*log(longitude) +room_type*log(number_of_reviews+1) , data = DataEdit2) 
+summary(interactfm4) 
+anova(interactfm4)
+vif(interactfm4)
+anova(interactfm4,interactfm2)
+```
+
+#The p-value is 0.0000184. In addition, the VIF value for the interaction term is not very big. Therefore, we keep the interaction term in our model.
+
+#Checking for significance of interaction between room_type and log(longitude)
+
+```{r}
+interactfm5 <- lm(log(price+1) ~ neighbourhood_group+ log(latitude)+log(longitude)+ room_type+ log(minimum_nights) + log(number_of_reviews+1)+ log(1000-availability_365) + log(reviews_per_month)+ neighbourhood_group*log(minimum_nights) + neighbourhood_group*log(number_of_reviews+1) + neighbourhood_group*log(1000-availability_365) + neighbourhood_group*log(reviews_per_month)+ room_type* neighbourhood_group  + room_type* log(latitude) +room_type*log(minimum_nights) +room_type*log(number_of_reviews+1) , data = DataEdit2) 
+summary(interactfm5) 
+anova(interactfm5)
+vif(interactfm5)
+anova(interactfm5,interactfm2)
+```
+
+#The p-value is 0.3606. In addition, the VIF value for the interaction term is very big. Therefore, we have evidence that the term is not statistically significant and so we remove it from our model.
+
+#Checking for significance of interaction between room_type and log(latitude)
+
+```{r}
+interactfm6 <- lm(log(price+1) ~ neighbourhood_group+ log(latitude)+log(longitude)+ room_type+ log(minimum_nights) + log(number_of_reviews+1)+ log(1000-availability_365) + log(reviews_per_month)+ neighbourhood_group*log(minimum_nights) + neighbourhood_group*log(number_of_reviews+1) + neighbourhood_group*log(1000-availability_365) + neighbourhood_group*log(reviews_per_month)+ room_type* neighbourhood_group +room_type*log(minimum_nights) +room_type*log(number_of_reviews+1) , data = DataEdit2) 
+summary(interactfm6) 
+anova(interactfm6)
+vif(interactfm6)
+anova(interactfm6,interactfm5)
+```
+
+#The p-value is 0.0002818. Thus, the term seems statistically significant. But the VIF value for the interaction term is very big. Thus, we remove the interaction term from our model.
+
+
+#Checking for significance of interaction between room_type and neighborhood_group.
+
+```{r}
+interactfm7 <- lm(log(price+1) ~ neighbourhood_group+ log(latitude)+log(longitude)+ room_type+ log(minimum_nights) + log(number_of_reviews+1)+ log(1000-availability_365) + log(reviews_per_month)+ neighbourhood_group*log(minimum_nights) + neighbourhood_group*log(number_of_reviews+1) + neighbourhood_group*log(1000-availability_365) + neighbourhood_group*log(reviews_per_month) +room_type*sqrt(minimum_nights) +room_type*log(number_of_reviews+1) , data = DataEdit2) 
+summary(interactfm7) 
+anova(interactfm7)
+vif(interactfm7)
+anova(interactfm7,interactfm6)
+```
+
+#The p-value is almost zero. Thus, the term seems very statistically significant. But the VIF value for the interaction term is relatively high. Also it is not adding much to the R^2 value of the model. Thus, we have decided to remove it from the model.
+
+#Checking for significance of interaction between log(reviews_per_month) and neighborhood_group.
+
+```{r}
+interactfm8 <- lm(log(price+1) ~ neighbourhood_group+ log(latitude)+log(longitude)+ room_type+ log(minimum_nights) + log(number_of_reviews+1)+ log(1000-availability_365) + log(reviews_per_month)+ neighbourhood_group*log(minimum_nights) + neighbourhood_group*log(number_of_reviews+1) + neighbourhood_group*log(1000-availability_365) +room_type*log(minimum_nights) +room_type*log(number_of_reviews+1) , data = DataEdit2) 
+summary(interactfm8) 
+anova(interactfm8)
+vif(interactfm8)
+anova(interactfm8,interactfm7)
+```
+
+#The p-value is 0.02528. However, the SSreg of the term is also very low. Moreover, it is not adding much to the R^2 value. Thus we have decided to remove the interaction.
+
+#Checking for significance of interaction between log(1000-availability_365) and neighborhood_group.
+
+```{r}
+interactfm9 <- lm(log(price+1) ~ neighbourhood_group+ log(latitude)+log(longitude)+ room_type+ log(minimum_nights) + log(number_of_reviews+1)+ log(1000-availability_365) + log(reviews_per_month)+ neighbourhood_group*log(minimum_nights) + neighbourhood_group*log(number_of_reviews+1) +room_type*log(minimum_nights) +room_type*log(number_of_reviews+1) , data = DataEdit2) 
+summary(interactfm9) 
+anova(interactfm9)
+vif(interactfm9)
+anova(interactfm9,interactfm8)
+```
+
+#The p-value is 0.8863. Thus we have strong evidence that the term is statistically insignificant and have decided to remove the interaction.
+
+#Checking for significance of interaction between log(number_of_reviews+1) and neighborhood_group.
+
+```{r}
+interactfm10 <- lm(log(price+1) ~ neighbourhood_group+ log(latitude)+log(longitude)+ room_type+ log(minimum_nights) + log(number_of_reviews+1)+ log(1000-availability_365) + log(reviews_per_month)+ neighbourhood_group*log(minimum_nights) +room_type*log(minimum_nights) +room_type*log(number_of_reviews+1) , data = DataEdit2) 
+summary(interactfm10) 
+anova(interactfm10)
+vif(interactfm10)
+anova(interactfm10,interactfm9)
+```
+
+#The p-value is 0.3451. Thus we have strong evidence that the term is statistically insignificant and have decided to remove the interaction.
+
+#Checking for significance of interaction between log(minimum_nights) and neighborhood_group.
+
+```{r}
+interactfm11 <- lm(log(price+1) ~ neighbourhood_group+ log(latitude)+log(longitude)+ room_type+ log(minimum_nights) + log(number_of_reviews+1)+ log(1000-availability_365) + log(reviews_per_month)+room_type*log(minimum_nights) +room_type*log(number_of_reviews+1) , data = DataEdit2) 
+summary(interactfm11) 
+anova(interactfm11)
+vif(interactfm11)
+anova(interactfm11,interactfm10)
+```
+
+#The p-value is below 0.00606. Thus, the term seems statistically significant. In addition, the VIF value for the interaction term is relatively low. However, the interaction term is not adding much to the R^2 value of the model. Moreover, the SSreg for the interaction term is also very small. Thus, to keep our model easier to interpret, and the fact that this interaction does not have any real life implications,  we have decided to remove it from the model.
+
+#Checking for significance of the term log(reviews_per_month) because it seems insignificant.
+
+```{r}
+interactfm12 <- lm(log(price+1) ~ neighbourhood_group+ log(latitude)+log(longitude)+ room_type+ log(minimum_nights) + log(number_of_reviews+1)+ log(1000-availability_365)+room_type*log(minimum_nights) +room_type*log(number_of_reviews+1) , data = DataEdit2) 
+summary(interactfm12) 
+anova(interactfm12)
+vif(interactfm12)
+anova(interactfm12,interactfm11)
+```
+
+#The p-value is 0.4873. Thus we have strong evidence that the term is statistically insignificant and have decided to remove it from model.
+
+###Comparing the model with all terms and all possible interactions to the final model that we have.
+
+```{r}
+anova(interactfm12, interactfm)
+```
+
+###The test shows that the full model is more statistically significant. That makes sense because we removed a lot of terms with very small p-values because they had high VIF values, or very low SSreg values. Moreover, many of these terms did not add to the R^2 value of the model. Thus, it made sense to eliminate them from the model. 
+
+###Computing Interpretations of a select few predictors from the model. Explained in depth in the report.
+
+```{r}
+1.015^{-5.167587} #Latitude, 1.015 is the multiplicative change of latitude which is approximately equal to 0.02 unit increase in latitude
+1.015^{-5.167587+c(-1,1)*qnorm(0.975)*0.52232} #95% CI for the effect of a 1.015 multiplicative change
+#Assuming the room_type variable in the interaction room_typePrivate room:log(number_of_reviews + 1) is at baseline level of Entire home/apt. For the sake of interpretation, we assign the value of minimum_nights to be the natural constant e. The linear combination now is beta7+beta12
+vcov(interactfm12)
+exp(-0.904043 - 0.046865)
+se <- sqrt(0.0010647+0.000012824-2*0.0001392) #Calculate the SE of the linear combination of the parameters of room_type and room_type:minimum_nights
+exp(-0.904043 - 0.046865 + c(-1,1)*qnorm(0.975)*se) #95% CI for the effect of room_typePrivate_room, holding others variables constant
+#Prediction of the price of a room with certain characteristics. Also computing the 95% prediction interval for the log(price+1)
+price.predplusone <- predict(interactfm12, newdata = data.frame(neighbourhood_group="West Region", latitude = 1.31657, longitude = 103.77536, room_type = "Private room", minimum_nights = 1, number_of_reviews = 0, availability_365 = 365), interval = "prediction", se.fit=T)
+exp(price.predplusone$fit)-1
+
+"The model predicts that a room of these characteristics will have a price of 90.39 and the 95% prediction interval will range from 35.83 to 226.75"
+```
+

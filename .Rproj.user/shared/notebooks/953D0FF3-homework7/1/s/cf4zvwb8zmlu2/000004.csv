@@ -1,0 +1,2 @@
+"0","salk_glm <- glm(y/m ~ consent + vaccine, family = ""binomial"", weights = m , data= salk)"
+"0","tidy(salk_glm, conf.int=TRUE)"

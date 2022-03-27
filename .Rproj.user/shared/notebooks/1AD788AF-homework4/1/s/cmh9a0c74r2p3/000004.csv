@@ -1,0 +1,4 @@
+"0","case1002_augment <- augment(case1002_lm)  # add fitted values"
+"0","ggplot(case1002_augment, aes(`log(Mass)`, `log(Energy)`, color = Type)) + "
+"0","  geom_point() + "
+"0","  geom_line(aes(y = .fitted), size = 1)"

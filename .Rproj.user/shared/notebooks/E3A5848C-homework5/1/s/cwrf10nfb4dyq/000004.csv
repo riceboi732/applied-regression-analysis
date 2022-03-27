@@ -1,0 +1,7 @@
+"0","knitr::opts_chunk$set(collapse=TRUE, prompt=FALSE, comment=NULL)"
+"0","library(Sleuth3)"
+"0","library(ggplot2)"
+"0","library(ggResidpanel)"
+"0","library(dplyr)"
+"0","library(broom)"
+"0","library(knitr)"

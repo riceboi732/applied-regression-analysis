@@ -1,0 +1,308 @@
+---
+title: "Final Project"
+author: "Victor Huang & Xander Roti"
+date: "12 November 2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, prompt=FALSE, comment=NULL)
+library(broom)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(knitr)
+library(gridExtra)
+library(GGally)
+library(car)
+library(dplyr)
+library(broom)
+```
+
+```{r}
+### Importing the data set
+heartoriginal <- read.csv("~/Stat230/heart.csv")
+```
+
+
+###Uploading the dataset and removing incomplete cases.
+```{r}
+###Dropping N/A values that would interfere with teh dataset
+heartoriginal <- heartoriginal %>% drop_na()
+heart <- filter(heartoriginal, Cholesterol > 0)
+```
+
+###Fitting the full model with all the predictors on the entire Dataset.
+```{r}
+### Creating the full glm model for the dataset with all variables
+heart_glm <- glm(HeartDisease ~ Age + Sex + ChestPainType + RestingBP + Cholesterol + FastingBS + RestingECG + MaxHR + ExerciseAngina + Oldpeak + ST_Slope, family = binomial, data=heart)
+summary(heart_glm)
+```
+
+```{r}
+###Augmenting code for easier viewing experience
+crp(heart_glm)
+heart_aug <- augment(heart_glm)
+heart_aug %>%
+ slice_max(.hat, n = 1)
+plot(heart_glm, which=4, id.n = 4)
+plot(heart_glm, which=5, id.n = 4)
+```
+
+
+```{r}
+### Finding the dimensions for our dataset
+dim(heart)
+heart <- mutate(heart, Age_grps = ntile(Age, n = 20))
+table(heart$Age_grps)
+```
+
+
+```{r}
+### Finding important values for our dataset (median, proportion, and log odds)
+heart_empLO <-heart %>%
+  group_by(Age_grps) %>%
+   summarize(Age_grps_med = median(Age),    # median Age of groups
+             pi_emp = mean(HeartDisease),         # proportion died
+             log_odds_emp = log(pi_emp/(1-pi_emp)))    # log odds
+```
+
+```{r}
+heart_empLO
+```
+
+```{r}
+### Plotting the model
+ggplot(heart_empLO, aes(x=Age_grps_med, y=log_odds_emp)) +
+  geom_point() +
+  geom_smooth(method = lm)
+```
+
+
+```{r}
+### Mutating the dataset and creating a table
+dim(heart)
+heart <- mutate(heart, RestingBP_grps = ntile(RestingBP, n = 20))
+table(heart$RestingBP_grps)
+```
+
+```{r}
+###Repeating the process above but for a different variable
+heart_empLO2 <-heart %>%
+  group_by(RestingBP_grps) %>%
+   summarize(RestingBP_grps_med = median(RestingBP),  # median BP of groups
+             pi_emp = mean(HeartDisease),         # proportion died
+             log_odds_emp = log(pi_emp/(1-pi_emp)))    # log odds
+```
+
+
+```{r}
+heart_empLO2
+```
+
+```{r}
+ggplot(heart_empLO2, aes(x=RestingBP_grps_med, y=log_odds_emp)) +
+  geom_point() +
+  geom_smooth(method = lm)
+```
+
+
+
+```{r}
+dim(heart)
+heart <- mutate(heart, Cholesterol_grps = ntile(Cholesterol, n = 20))
+table(heart$Cholesterol_grps)
+```
+
+```{r}
+###Repeating the process above but for a different variable
+heart_empLO3 <-heart %>%
+  group_by(Cholesterol_grps) %>%
+   summarize(Cholesterol_grps_med = median(Cholesterol),  
+             pi_emp = mean(HeartDisease),         # proportion died
+             log_odds_emp = log(pi_emp/(1-pi_emp)))    # log odds
+heart_empLO3
+```
+
+```{r}
+ggplot(heart_empLO3, aes(x=Cholesterol_grps_med, y=log_odds_emp)) +
+  geom_point() +
+  geom_smooth(method = lm)
+```
+
+
+
+```{r}
+dim(heart)
+heart <- mutate(heart, MaxHR_grps = ntile(MaxHR, n = 20))
+table(heart$MaxHR_grps)
+```
+
+```{r}
+heart_empLO4 <-heart %>%
+  group_by(MaxHR_grps) %>%
+   summarize(MaxHR_grps_med = median(MaxHR),    # median MaxHR of groups
+             pi_emp = mean(HeartDisease),         # proportion died
+             log_odds_emp = log(pi_emp/(1-pi_emp)))    # log odds
+heart_empLO4
+```
+
+```{r}
+ggplot(heart_empLO4, aes(x=MaxHR_grps_med, y=log_odds_emp)) +
+  geom_point() +
+  geom_smooth(method = lm)
+```
+
+
+
+```{r}
+heart_glm <- glm(HeartDisease ~ Age + Sex + ChestPainType + RestingBP + Cholesterol + FastingBS + RestingECG + MaxHR + ExerciseAngina + Oldpeak + ST_Slope, family = binomial, data=heart)
+summary(heart_glm)
+```
+
+```{r}
+### Doing drop-in-deviance tests to test the significance of the variable
+heart_glm2 <- glm(HeartDisease ~ Sex + ChestPainType + RestingBP + Cholesterol + FastingBS + RestingECG + MaxHR + ExerciseAngina + Oldpeak + ST_Slope, family = binomial, data=heart)
+
+anova(heart_glm2, heart_glm, test = "Chisq")
+```
+
+
+```{r}
+1-pchisq(483.58, 730)
+
+488.14 - 483.58 ##LRT
+
+0.016550/0.2087463
+2*pnorm(0.07928284)
+```
+
+The estimated coefficient for Age is 0.0313784, and the standard error is 0.0148105. The p-value that we get for the goodness of fit test is 1. The p-value that we get for the Wald’s test is 0.034119. The p-value that we get for the drop-in-deviance test is 0.03275. This means that Age is significant and that we should keep this in our model.
+
+
+
+
+```{r}
+### Doing drop-in-deviance tests to test the significance of the variable
+heart3_glm <- glm(HeartDisease ~ Age + ChestPainType + RestingBP + Cholesterol + FastingBS + RestingECG + MaxHR + ExerciseAngina + Oldpeak + ST_Slope, family = binomial, data=heart)
+
+anova(heart3_glm, heart_glm, test = "Chisq")
+```
+
+In this model, the estimated coefficient for Sex is 1.8655490 with a standard error of 0.3134065. The p-value that we get for the Wald's test is 2.64e-09. In this drop-in-deviance test, the p-value is significant here, showing that we do not take Sex out of the model.
+
+
+```{r}
+### Doing drop-in-deviance tests to test the significance of the variable
+heart4_glm <- glm(HeartDisease ~ Age + Sex + RestingBP + Cholesterol + FastingBS + RestingECG + MaxHR + ExerciseAngina + Oldpeak + ST_Slope, family = binomial, data=heart)
+
+anova(heart4_glm, heart_glm, test = "Chisq")
+
+```
+
+The p-value that we get for the Wald's test for each ChestPainType is 2.64e-09. In this drop-in-deviance test, the p-value is significant here, showing that we do not take ChestPainType out of the model.
+
+```{r}
+### Doing drop-in-deviance tests to test the significance of the variable
+heart_glm5 <- glm(HeartDisease ~ Age + Sex + ChestPainType + Cholesterol + FastingBS + RestingECG + MaxHR + ExerciseAngina + Oldpeak + ST_Slope, family = binomial, data=heart)
+summary(heart_glm5)
+
+anova(heart_glm5, heart_glm, test = "Chisq")
+```
+
+In this ANOVA test, when analyzing the term for RestingBP, the drop-in-deviance p-value is 0.1054, which shows that RestingBP is not significant to the model.
+
+```{r}
+### Doing drop-in-deviance tests to test the significance of the variable
+heart_glm6 <- glm(HeartDisease ~ Age + Sex + ChestPainType + FastingBS + RestingECG + MaxHR + ExerciseAngina + Oldpeak + ST_Slope, family = binomial, data=heart)
+summary(heart_glm6)
+
+anova(heart_glm6, heart_glm5, test = "Chisq")
+```
+
+The p-value for this drop-in-deviance test for the term Cholesterol is 0.1497, which shows that the smaller model is better, as this term is not significant.
+
+
+```{r}
+### Doing drop-in-deviance tests to test the significance of the variable
+heart_glm7 <- glm(HeartDisease ~ Age + Sex + ChestPainType + RestingECG + MaxHR + ExerciseAngina + Oldpeak + ST_Slope, family = binomial, data=heart)
+summary(heart_glm7)
+
+anova(heart_glm7, heart_glm6, test = "Chisq")
+```
+
+For testing the term FastingBS, we get a drop-in-deviance p-value of 0.2231. This shows that this term is not significant to the model.
+
+```{r}
+heart_glm8 <- glm(HeartDisease ~ Age + Sex + ChestPainType + MaxHR + ExerciseAngina + Oldpeak + ST_Slope, family = binomial, data=heart)
+summary(heart_glm8)
+
+anova(heart_glm8, heart_glm7, test = "Chisq")
+```
+
+For testing the term RestingECG, we get a drop-in-deviance p-value of 0.6332. This shows that this term is not significant to the model.
+
+
+```{r}
+### Doing drop-in-deviance tests to test the significance of the variable
+heart_glm9 <- glm(HeartDisease ~ Age + Sex + ChestPainType + ExerciseAngina + Oldpeak + ST_Slope, family = binomial, data=heart)
+summary(heart_glm9)
+
+anova(heart_glm9, heart_glm8, test = "Chisq")
+```
+
+For testing the term MaxHR, we get a drop-in-deviance p-value of 0.7932. This shows that this term is not significant to the model.
+
+```{r}
+### Doing drop-in-deviance tests to test the significance of the variable
+heart_glm10 <- glm(HeartDisease ~ Age + Sex + ChestPainType + Oldpeak + ST_Slope, family = binomial, data=heart)
+
+anova(heart_glm10, heart_glm9, test = "Chisq")
+```
+
+For testing the term ExerciseAngina, we get a drop-in-deviance p-value of 0.000364. This shows that this term is significant to the model.
+
+```{r}
+### Doing drop-in-deviance tests to test the significance of the variable
+heart_glm11 <- glm(HeartDisease ~ Age + Sex + ChestPainType + ExerciseAngina + ST_Slope, family = binomial, data=heart)
+
+anova(heart_glm11, heart_glm9, test = "Chisq")
+```
+
+For testing the term OldPeak, we get a drop-in-deviance p-value of 0.001653. This shows that this term is significant to the model.
+
+```{r}
+### Doing drop-in-deviance tests to test the significance of the variable
+heart_glm12 <- glm(HeartDisease ~ Age + Sex + ChestPainType + ExerciseAngina + Oldpeak, family = binomial, data=heart)
+
+anova(heart_glm12, heart_glm9, test = "Chisq")
+```
+
+For testing the term ST_Slope, we get a drop-in-deviance p-value of 2.2e-163. This shows that this term is significant to the model.
+
+```{r}
+### Doing drop-in-deviance tests to test the significance of the variable
+heart_glm <- glm(HeartDisease ~ Age + Sex + ChestPainType + RestingBP + Cholesterol + FastingBS + RestingECG + MaxHR + ExerciseAngina + Oldpeak + ST_Slope, family = binomial, data=heart)
+summary(heart_glm)
+
+heart_glm13 <- glm(HeartDisease ~ Age + Sex + ChestPainType + ExerciseAngina + Oldpeak + ST_Slope, family = binomial, data=heart)
+
+anova(heart_glm13, heart_glm, test = "Chisq")
+```
+
+Taking out all of the insignificant terms gives us a drop-in-deviance p-value of 0.306.
+
+
+```{r}
+#Summarizing the final model for the dataset
+summary(heart_glm13)
+```
+
+```{r}
+### 95% Confidence term for all coefficient
+confint(heart_glm13)
+
+### Wald-Z Tests for all parameters
+summary(heart_glm13)
+
+```

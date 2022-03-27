@@ -1,0 +1,2 @@
+"0","case2001_glm <- glm(Status ~ Age*Sex, family = binomial, data = case2001)"
+"0","tidy(case2001_glm, conf.int = TRUE)"

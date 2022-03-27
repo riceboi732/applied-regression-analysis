@@ -1,0 +1,3 @@
+"0","rake_glm_binom <- glm(SiteRake/SiteM ~ log(SiteBiom + 1) + SiteDepth + SiteSub, family = binomial, weights = SiteM, data = RakeData)"
+"0","rake_aug <- augment(rake_glm_binom, type.residuals = ""deviance"")"
+"0","rake_aug %>% arrange(desc(.resid))"

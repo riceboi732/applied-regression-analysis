@@ -1,0 +1,285 @@
+---
+title: "Stat 230 HW 2"
+author: 'Name: Victor Huang'
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+  word_document: default
+---
+```{r, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, 
+                      prompt=FALSE, 
+                      message = FALSE, warning = FALSE)
+```
+
+### worked with: None
+
+Homework 2 is due **by noon, Tues 9/28**. Please complete the assignment in this Markdown document, filling in your answers and R code below.  I didn't create answer and R chunk fields like I did with homework 1, but please fill in your answers and R code in the same manner as hw 1. Make sure to follow the homework guidelines when writing up this assignment (handout is located on the right side of moodle page).
+
+Tips for using Markdown with homework sets:
+
+- Work through a problem by putting your R code into R chunks in this .Rmd. Run the R code to make sure it works, then knit the .Rmd to verify they work in that environment. 
+- Make sure you load your data in the .Rmd and include any needed `library` commands. 
+
+- Feel free to edit or delete  questions, instructions, or code provided in this file when producing your homework solution. 
+
+- For your final document, you can change the output type from `html_document` to `word_document` or `pdf_document`. These two to output types are better formatted for printing. 
+
+- Keep the hw problems in **problem order** I give in this doc. You can attach hand-written work for a problem (if needed) but make it clear in this doc when you are answering a problem using work attached to your printed pdf/word doc. 
+
+-----------------------------------
+
+## Problem 1: Big Bang:  ch. 7 exercise 13
+
+Comment: Complete this problem "by hand" using the info in Display 7.9 (i.e. *don't* load the data and fit a `lm`). Use the `qt` command in R to get your mutliplier $t^*$ for the CI calculation. 
+
+*Answer:* As shown below, we have evidence that the effect of measured recession velocity on average measured distance is statistically significant (t = 2.073873, d.f. = 22, p = 0.0000045). We are 95% confident that a 1 km/s increase in recession velocity is associated with a 0.0008672125 to 0.0018787875 km increase in measured distance.
+```{r}
+qt(.975,22)
+0.001373 + c(-1,1)*qt(.975,10)*0.000227
+```
+-----------------------------------
+
+## Problem 2: Agstrat data revisited
+Recall the `agstrat.csv` data used for homework 1. This was a stratified random sample of US counties. We will consider the regression of farm acreage in 1992 (y=`acres92`) on farm acreage in 1982 (x=`acres82`).
+
+#### (2a)  Use the `ggplot2` package to create a scatterplot of `acres92` against `acres82` that includes the fitted regression line. Describe the direction, form and strenth of the relationship shown in this graph.
+
+*answer:* Form: Mostly linear with no visible curvature observed, Direction: Positive (as one increases the other increases as well) Strength: Strong, not much variation.
+```{r}
+library(ggplot2)
+agstrat <- read.csv("http://people.carleton.edu/~kstclair/data/agstrat.csv")
+ggplot(agstrat, aes(x = acres82, y = acres92)) +
+geom_point() +
+geom_smooth(se = FALSE)+
+labs(title = "Acres82 vs. Acres92")
+```
+
+#### (2b) Fit the regression of `acres92` on `acres82`. Interpret the slope in context for this problem. 
+
+```{r}
+agstrat_lm <- lm(acres92 ~ acres82, data = agstrat)
+summary(agstrat_lm)
+ggplot(agstrat, aes(x = acres82, y = acres92)) +
+geom_point() +
+geom_smooth(se = FALSE)+
+labs(title = "Acres82 vs. Acres92")
+```
+*answer:* $\mu_{acres82|acres92} = -5532 + 0.9844(acres92), \hat \sigma = 41050$. According to this fitted model, for every 1 acreage increase in farm acreage in 1982 is associated with a 0.9844 increase in farm acreage in 1992.
+
+
+#### (2c)  Compute the test statistic and p-value to test $H_0: \beta_1 = 0$ vs $H_A: \beta_1 \neq 0$ using the estimated slope and SE from part (b). Your answers should match the values given in part (b), but I want to see your *work* showing how these values are calculated in part (c). Then *interpret* the test stat and p-value in context. 
+
+*answer:* $t-stat = \frac{0.9844 - 0}{0.007035} = 139.9289, p-value = 2P(T > 139.9289) = 2e-16$. Since we have a p-value that is significantly less than 0.05 (p-value = 2e-16). This means we have evidence that the estimated effect of farm acreage in 1982 on farm acreage in 1992 is statistically significant.
+
+#### (2d) Are the four regression model assumptions satistified for your model in part (b) (e.g. linearity, constant variance, normality and independence). Make sure to show and explain all graphs used to assess these assumptions. 
+
+*answer:* Linearity: Looking at the scatter plot we can see that the mean response does indeed vary linearly with $x$. Constant Variance: We can also see that the model errors are not associated with $x$. Normality: From the histogram we can see that the $\mu_{y|x}$ can be described by a normally distributed model. Independence: Since these values were measured over a decade, we can say that they are temporally (time) correlated and are therefore independent
+
+```{r}
+library(ggplot2)
+agstrat <- read.csv("http://people.carleton.edu/~kstclair/data/agstrat.csv")
+agstrat_lm <- lm(acres92 ~ acres82, data = agstrat)
+library(broom)
+library(ggResidpanel)
+agstrat_aug <- augment(agstrat_lm)
+head(agstrat_aug)
+ggplot(agstrat, aes(x = acres82, y = acres92)) +
+geom_point() +
+geom_smooth(se = FALSE)+
+labs(title = "Acres82 vs. Acres92")
+resid_xpanel(agstrat_lm)
+hist(agstrat_aug$.resid)
+plot(agstrat_lm, which = 2)
+resid_panel(agstrat_lm, plots = "qq")
+resid_interact(agstrat_lm, plots = "qq")
+```
+
+-----------------------------------
+
+
+## Problem 3: Meat Processing:  ch. 7 exercises 17 (a-b only), 18, 20
+
+*answer:* 17.a) $\mu_{pH|Time} = 6.98363 - 0.72566(acres92), \hat \sigma = 0.08226$; 17.b) standard error of the estimated mean is 0.0297; 18. SE prediction = 0.0875; CI = (5.6172,6.0208)
+
+- For 17(a), the data for this example is called `case0702` which is in the `Sleuth3` package. Your R chunk should look like
+```{r}
+library(Sleuth3)
+head(case0702)
+meat_lm <- lm(pH ~ log(Time), data=case0702)
+predict(meat_lm,
+        newdata = data.frame(Time = 5),
+        interval = "confidence",
+        se.fit = T)
+```
+$0.0823 * sqrt(1 + 1/10 + (1.609 - 1.190)^2/9 * 0.6344 = 0.0875$
+$6.98 - 0.726*log(5) = 5.819$
+$(5.819 +/- (2.306 * 0.0875) = (5.6172,6.0208)$
+
+- Make sure that you use `log(TIME)` as the predictor in your model: `lm(pH ~ log(Time), data=case0702)`
+- You don't need to do 17(b) by hand, just use the `predict` command in R. Important note: If you log a predictor in your `lm` command, e.g. `lm(y ~ log(x))`, then you give the `predict` command the value of `x` on the **original** (unlogged) scale when entering a value for `newdata`.
+
+-----------------------------------
+
+
+## Problem 4: Biological Pest Control: ch. 8 exercise 17
+
+- Data is in the `Sleuth3` package (`ex0817`).
+- For part (a), limit yourself to exploring logarithm and square root transformation for one or both variables. How can you make these graphs?
+    - The `ggplot2` package let's you easily do this **without** applying those functions to your variables, instead you add another layer that tells R how to scale a particular axis. This method of visualization is nice because your numerical labels on the x/y axis will still be measured in the original units of the variables.  If you want to, say, look at the scatterplot of `sqrt(y)`  against `log10(x)` (base-10 log) you would add the layers `scale_y_sqrt()` and `scale_x_log10()` to your scatterplot of `y` against `x`.  For this example, that would look like:
+    
+*answer* $Y = 10.796925 - 0.012135x$
+```{r, eval = FALSE}
+library(Sleuth3)
+head(ex0817)
+library(ggplot2)
+ggplot(ex0817, aes(x= Load, y = Mass)) + 
+  geom_point() + 
+  scale_y_sqrt() + 
+  scale_x_log10()
+ex0817_lm <- lm(Mass ~ Load, data = ex0817)
+summary(ex0817_lm)
+fitted(ex0817_lm)
+resid(ex0817_lm)
+```
+- For part (b), fit the model and give the fitted regression equation.
+
+-----------------------------------
+
+## Problem 5: Pollen Removal ch. 8 exercise 19
+
+- The data for this problem is `ex0327`
+- For part (b) scatterplot, use the `scale` layers described in Problem 4 hints.
+- For part (c), use the `filter` command from `dplyr` to make a version of the data set that only contains cases where `DurationOfVisit < 31`
+
+*answer:* a.) The residual plot is skewed to the right; b.) The log transformation do not help; c.) The new plot filtered with duration < 31 fits much better as shown by the graph
+```{r}
+library(Sleuth3)
+library(dplyr)
+head(ex0327)
+ex0327_lm <- lm(PollenRemoved ~ DurationOfVisit, data = ex0327)
+library(broom)
+ex0327_aug <- augment(ex0327_lm)
+head(ex0327_aug)
+library(ggplot2)
+ggplot(ex0327_aug, aes(x = DurationOfVisit, y = PollenRemoved)) +
+  geom_point()  +
+  geom_hline(yintercept = 0, linetype = "dashed") + 
+  labs(y = "residuals", title = "Residual plot")
+library(ggResidpanel)
+resid_xpanel(ex0327_lm)
+new_Time <- filter(ex0327,DurationOfVisit < 31)
+ggplot(new_Time, aes(x = DurationOfVisit, y = PollenRemoved)) +
+  geom_point()  +
+  geom_hline(yintercept = 0, linetype = "dashed") + 
+  labs(y = "residuals", title = "Residual plot")
+```
+
+-------------------------------
+
+## Problem 6: Normality Assumption
+The (hidden) R chunk below defines a function named `reg.sim2` that samples responses from a  SLR model given a vector of explanatory values $x$. You will use the following SLR model to generate your set of responses:
+$$
+Y_{i} = 20 + 1x_{i} + \epsilon_{i} \ \ \ \ \epsilon_{i} \sim N(0,2)
+$$
+so that $\beta_{0}=20, \beta_{1}=1$ and $\sigma=2$. 
+
+
+```{r, include=FALSE}
+# R code for a function that simulates data from a given regression model
+# input: 
+# x= explanatory variable
+# n= sample size
+# beta0, beta1, sigma = model parameter values
+# grph = T/F = plot the sampled values, data and residuals?
+reg.sim2 <- function(x,beta0,beta1,sigma, grph=T)
+{
+  n<- length(x)
+  muy.x <- beta0 + beta1 * x
+  
+  # simulate some y's:
+  y <- rnorm(n, muy.x,sigma)
+  
+  mylm<- lm(y~x)
+  
+  # plot data, LS line, true line
+  if (grph){
+    par(mfrow=c(3,2))
+    plot(x,y,xlab="x",ylab="simulated y",pch=20,ylim=c(beta0+beta1*min(x)-3, beta0+beta1*max(x)+3))
+    points(mean(x),mean(y),pch="X",cex=2)
+    abline(mylm,lwd=3,col="blue")
+    abline(beta0,beta1,lwd=3,lty=2,col="red")
+    legend("topleft",legend=c("Pop.","Samp."),col=c("red","blue"),lty=c(2,1))
+    
+    
+   # hist(x); 
+    plot(fitted(mylm),resid(mylm),main="residual plot"); abline(h=0)
+    hist(y)
+    qqnorm(y,main="QQ plot of y"); qqline(y)
+    
+    hist(resid(mylm)); qqnorm(resid(mylm),main="QQ plot of residuals"); qqline(resid(mylm))
+    par(mfrow=c(1,1))
+  }
+  return(list(b0=mylm$coefficients[[1]], b1=mylm$coefficients[[2]], SE.b0=sqrt(vcov(mylm)[1,1]), SE.b1 =  sqrt(vcov(mylm)[2,2])))
+}
+
+```
+
+#### 6a
+We start by generating a sample of 1000 explanatory variable values. Suppose the explanatory variable $x$ is equally (uniformly) distribution between 1 and 10. Generate $x$  and view its distribution (use whatever seed value you like):
+
+```{r, fig.width=4,fig.height=3}
+set.seed(7)
+x <- seq(from=1,to=10,length=1000)
+hist(x)
+```
+
+Next, for each of the 1000  $x_i$'s that you just created, use the `reg.sim2` function to  generate 1000 responses $y_i$ from the population model described at the start of this problem:
+
+```{r, fig.height=6}
+reg.sim2(x, beta0=20, beta1=1, sigma=2, grph=T)
+```
+
+The R output gives the estimated slope and intercept ($\hat{\beta}_{1}, \hat{\beta}_{0}$), a scatterplot of the data (along with the sample and population regression lines), and histograms/QQnormal plots for the responses $y_i$ and the residuals $r_{i}$. Use the **histograms** and **QQ normal plots** to answer the following questions:
+
+
+**Are the sampled $y$s normally distributed? If not, describe the general shape of their distribution.**
+
+*answer* Yes, looking at the graph we can that the samples $y$ are normally distributed. 
+
+**Are the residuals normally distributed? If not, describe the general shape of their distribution.**
+
+*answer* Yes, looking at the graph we can that the residuals are normally distributed. 
+
+#### 6b Repeat part (a), but this time generate a sample of 1000 $x$'s that are skewed right using the command `rgamma(1000, 1, 1/2)`.
+
+*answer* Looking at the graph we can that the samples $y$ are normally distributed but slightly skewed to the right 
+
+*answer* Looking at the graph we can that the residuals are normally distributed. 
+
+```{r}
+set.seed(1)
+x <- rgamma(1000, 1, 1/2)
+hist(x)
+reg.sim2(x, beta0=20, beta1=1, sigma=2, grph=T)
+```
+
+#### 6c  Repeat part (a), but this time generate a sample of 1000 $x$'s that are normally distributed using the command `rnorm(1000, 10, 2)`.
+
+*answer* Looking at the graph we can that the samples $y$ are normally distributed but slightly skewed to the left 
+
+*answer* Looking at the graph we can that the residuals are normally distributed. 
+
+```{r}
+set.seed(7)
+x <- rnorm(1000, 10, 2)
+hist(x)
+reg.sim2(x, beta0=20, beta1=1, sigma=2, grph=T)
+```
+
+#### 6d Use your simulation results from (a)-(c) to explain how the distribution of the explanatory variable $x$ can affect the distribution of the response.
+
+*answer* Depending on how the distribution of the explanatory variable $x$, the distribution of the response can be skewed to the left or to the right. 
+
+#### 6e (not  a question!) Moral: All the data generated for this problem satisfy the SLR model assumptions. Your take away from Q7 should be to see that *neither* your response nor  explanatory variables need to be *normally distributed* for the SLR model assumptions to hold. Rather, the SLR model says that the model errors (variation around the line) are normally distributed. Assessing the SLR "normality" assumption should focus on checking the distribution of the *residuals* rather than the distribution of the responses. 

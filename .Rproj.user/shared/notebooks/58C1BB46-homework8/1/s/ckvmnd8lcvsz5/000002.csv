@@ -1,0 +1,6 @@
+"0","rake_new_glm <- update (rake_glm_binom, subset = c(-3, -25, -16))"
+"0","1-pchisq(15.557, df = 20)"
+"1","[1]"
+"1"," 0.743699"
+"1","
+"

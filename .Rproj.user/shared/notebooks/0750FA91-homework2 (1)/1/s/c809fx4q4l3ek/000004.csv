@@ -1,0 +1,4 @@
+"0","ex0327_lm <- lm(PollenRemoved ~ DurationOfVisit, data = ex0327)"
+"0","library(broom)"
+"0","ex0327_aug <- augment(ex0327_lm)"
+"0","head(ex0327_aug)"

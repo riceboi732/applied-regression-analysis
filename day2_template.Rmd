@@ -1,0 +1,117 @@
+---
+title: "Day 2 - Comparing two means (review)"
+author: "St Clair"
+date: "Stat 230"
+output: html_document
+---
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(echo = TRUE, # show code?
+                      eval = TRUE, # run code?
+                      message = FALSE,  # don't show package loading messages
+                      warning = FALSE)   # leave out warning messages
+```
+
+
+####  1. Data
+
+Read in the data and check variable names:
+```{r}
+agstrat<- read.csv("http://people.carleton.edu/~kstclair/data/agstrat.csv")
+names(agstrat)
+```
+
+
+**(1a) How many counties were sampled from each region?**
+
+```{r}
+# (1a) commands
+
+```
+
+
+We want to focus on W and NC for our comparison. I will do a lot of data manipulation in this class using the R package `dplyr`. This package is already available on the mirage server, but if you are using a newly installed version of Rstudio on your computer you will need to install the package first. 
+
+The `filter` command from the `dplyr` package selects **rows** from a data set that we want to keep. E.g. only rows from the W or NC regions. The argument used in this command is a **logical** statement and the row of a given case is kept in the data set when the statement is `TRUE`. 
+ 
+```{r}
+# filter data to W and NC
+
+```
+
+
+
+#### 2. EDA
+
+**(2a) In 2-3 sentences, compare the distributions (shape, center, spread) of `farms92` by `region` (W vs. NC).**
+
+Note that the commands below give basic R commands for comparing distributions graphically and numerically. You do not necessarily need to use or show all output below when answering this type of question for homework, exams or reports. 
+
+Graphical options include boxplots:
+```{r, fig.width=9, fig.height=4}
+# regular ("base" R) boxplot:
+
+```
+
+
+or faceted histograms from the `ggplot2` package:
+```{r, fig.width=9, fig.height=4}
+# ggplot histogram, by region
+
+```
+
+
+Summary stats, by region, can be found using multiple tools in R. The `tapply` command is an option:
+```{r}
+# stats, by region
+
+```
+
+
+So is using the `group_by` and `summarize` combination in `dplyr`. Here we get the mean and SD of `farms92` for both regions:
+```{r}
+# stats, by region, using dplyr
+
+```
+
+
+**(2b) What county has the unusually high number of farms in the western region? How many farms do they have? Any ideas why it is so large? How do the summary stats change when this county is omitted?**
+
+Here we find which row in `agstrat2` has a `farms92` value greater than 3000:
+```{r}
+# find row number based on a condition:
+
+```
+
+What county is this? We need to access row 118 in `agstrat2`. We use use `[]` subsetting or the `slice` command from `dplyr`:
+```{r}
+# subsetting (try both ways)
+
+```
+
+We can use the `dplyr` commands for (2a) with the `slice` command added to get stats without row 118
+```{r}
+# use dplyr to get stats without 118
+
+```
+
+
+#### 3. Inference
+
+**(3a) What hypotheses are being tested with the `t.test` command below? What are the p-value and test statistics values for this test? How do you interepret the test statistic? How do you interpret the p-value? Are the assumptions met for this t-test?**
+
+
+```{r}
+# run t test to compare mean number of farms 
+
+```
+
+**(3b) How and why do the test stat and p-value change when we omit row 118? Does your test conclusion change when omitting 118? Why?**
+
+```{r}
+# redo without row 118 outlier
+
+```
+
+#### 4. Conclusion
+**(4a) Do the average number of farms per county differ in the western and north central regions in 1992? If they do differ, by how much? Answer these question in context using numbers from the results above to support your conclusions.**

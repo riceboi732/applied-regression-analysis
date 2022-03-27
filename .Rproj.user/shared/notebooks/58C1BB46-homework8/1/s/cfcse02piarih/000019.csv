@@ -1,0 +1,1 @@
+"0","rake_aug %>% slice_max(.cooksd, n = 1)"

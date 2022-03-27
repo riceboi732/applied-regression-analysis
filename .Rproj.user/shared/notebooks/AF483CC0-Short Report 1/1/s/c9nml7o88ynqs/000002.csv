@@ -1,0 +1,3 @@
+"0","ggplot(ex0825, aes(x = Bush2000, y = Buchanan2000)) + geom_point() + geom_smooth(method = ""lm"", se = FALSE) + labs(title = ""Votes for Bush vs. Buchanan in all Florida counties"") # creating the scatter plot for the dataset"
+"2","`geom_smooth()` using formula 'y ~ x'
+"

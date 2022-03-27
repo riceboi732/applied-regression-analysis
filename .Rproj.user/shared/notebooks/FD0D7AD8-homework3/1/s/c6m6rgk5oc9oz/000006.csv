@@ -1,0 +1,1 @@
+"0","ggplot(pcb %>% slice(-4, -12,-14,-16,-18,-19,-21,-22,-23), aes(x = pcb84, y = pcb85)) + geom_point()"

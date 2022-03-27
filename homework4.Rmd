@@ -1,0 +1,357 @@
+---
+title: "Stat 230 HW 4"
+author: 'Name: Victor Huang'
+output:
+  word_document: default
+  pdf_document: default
+latex_engine: xelatex
+---
+```{r, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, prompt=TRUE, comment=NULL)
+library(Sleuth3)
+library(ggplot2)
+library(dplyr)
+library(broom)
+library(knitr)
+```
+
+
+### worked with: No one
+
+
+Homework 4 is due **by 3pm Thursday, Oct. 14**. Please complete the assignment in this Markdown document, filling in your answers and R code below.  I didn't create answer and R chunk fields like I did with homework 1, but please fill in your answers and R code in the same manner as hw 1.  Submit  a hard copy of the **compiled pdf or word doc** either
+
+  - in class 
+  - in drop-in office hours 
+  - in the paper holder outside my CMC 222 office door
+
+Tips for using Markdown with homework sets:
+
+- Work through a problem by putting your R code into R chunks in this .Rmd. Run the R code to make sure it works, then knit the .Rmd to verify they work in that environment.
+    - Make sure you load your data in the .Rmd and include any needed `library` commands. 
+- Feel free to edit or delete  questions, instructions, or code provided in this file when producing your homework solution. 
+- For your final document, you can change the output type from `html_document` to `word_document` or `pdf_document`. These two to output types are better formatted for printing. 
+  - on maize: you may need to allow for pop-ups from this site 
+- If you want to knit to pdf while running Rstudio from your computer (*not* from maize), you  will need a LaTeX compiler installed on your computer. This could be [MiKTeX](https://miktex.org/), [MacTeX](http://www.tug.org/mactex/) (mac), or TinyTex. The latter is installed in R: first install the R package `tinytex`, then run the command `tinytex::install_tinytex()` to install this software. 
+  - If you are using maize, you don't need to install anything to knit to pdf!
+
+
+-------------------------------------
+
+
+## Problem 1: Depression and Education:  ch. 9 exercise 19 parts (a), (b) and (c)
+
+- Part (c) is missing its label in my version of your textbook, if this is the case in your textbook, then part (c) is the question that follows the part (b) question. 
+
+- There **is no data for this problem**. Write down a *specific model mean function* $\mu(Y \mid X) = \beta_0 + ...$ **with indicator variables for factor levels**. 
+
+- **Hint:** You must carefully write a mean function for both parts (a) and (b). You will be using dummy variables for your categorical variable, so you must define what the dummy variable(s) are indicating (i.e. which level are they identifying?). When trying to answer the questions about divergence, make sure to review the info provided for the problem - they are wondering if the difference in mean depression score for college (i) and high school only (iii) widens as people age.
+
+a)
+$$
+\hat \mu_{depression|age} = \beta_{0} + \beta_{1}(age)*(somecollege) + \beta_{2}(age)(highschool)
+$$
+As we can see from the equation, the $\beta_{3}(CD) - \beta_{1}(HS)$ would be the parameter that measures the diverging gap between categories (i) and (iii) with age.
+
+b)
+$$
+\hat \mu_{depression|age} = \beta_{0} + \beta_{1}(HS) + \beta_{1}(HSCD) + \beta_{3}(CD)= \beta_{0} + \beta_{1}(HS+HSCD) + \beta_{3}(CD)
+$$
+As we can see from the equation, a possible parameter would be $\beta_{3}(CD) - \beta_{1}(HS + HSCD)$ would be a parameter that measures the diverging gap.
+
+c)
+$$
+\hat \mu_{depresson|teen,middle,old} = \beta_{0} + \beta_{1}(teen) + \beta_{1}(middle) + \beta_{3}(old)
+$$
+Yes, by measuring the $\beta_{1}(teen) - \beta_{3}(old)$ parameter we can see how age and education correlate with depression, thus, characteizing the divergence hypothesis.
+
+---------------------------------
+
+
+## Problem 2: Bat Echolocation
+Use the data from case study 10.1.2 (`case1002`) to answer the questions below. 
+
+```{r}
+library(Sleuth3)
+library(dplyr)
+library(ggplot2)
+library(ggResidpanel)
+library(broom)
+library(knitr)
+case1002 <- case1002
+```
+
+### (2a) 
+Use R to fit the parallel regression lines model for the regression of log energy on log mass and vertebrate type. (The same model fit in the case study). Note that your model summary will be different from display 10.6 because the baseline Type group set by R is different than the baseline used by the book. **Do not** change the baseline group in R to make your results look like display 10.6.
+
+```{r}
+case1002 <- case1002
+case1002_lm <- lm(log(Energy) ~ log(Mass) + Type, data=case1002)
+summary(case1002_lm)
+```
+$$
+\hat \mu_{log(Energy)|log(Mass), vertebrate} = -1.49770 + 0.81496(log(Mass)) + -0.07866(nonEchoBats) + 0.02360(nonEchoBirds)
+$$
+Here we have the general estimated mean model
+$$
+\hat \mu_{log(Energy)|log(Mass), vertebrate = echoBats} = -1.49770 + 0.81496(mass) + -0.07866(0) + 0.02360(0) = -1.49770 + 0.81496(mass)
+$$
+Here we have the estimated mean model for echo locating bats
+$$
+\hat \mu_{log(Energy)|log(Mass), vertebrate = nonEchoBats} = -1.49770 + 0.81496(mass) + -0.07866(nonEchoBats) + 0.02360(0) = -1.49770 + 0.81496(mass) + -0.07866(nonEchoBats)
+$$
+Here we have the estimated mean model for non-echo locating bats
+$$
+\hat \mu_{log(Energy)|log(Mass), vertebrate = nonEchoBirds} = -1.49770 + 0.81496(mass) + -0.07866(0) + 0.02360(nonEchoBirds) = -1.49770 + 0.81496(mass) + 0.02360(nonEchoBirds)
+$$
+Here we have the estimated mean model for non-echo locating birds
+
+Use the summary results, write down the estimated mean models for each vertebrate type: (i) echolocating bats, (ii) non-echo locating bats and (iii) non-echo locating birds. Simplify your models/equations as much as possible  (e.g. give a formula with estimated slope and intercept for *each* of the three mean log energy lines, but no need to "unlog" your variables.)
+
+### (2b)
+With results from (a), test whether the lines for the echo locating bats and non-echo locating birds coincide (e.g. are the same). 
+
+```{r}
+case1002_lm <- lm(log(Energy) ~ log(Mass) + Type, data=case1002)
+kable(tidy(case1002_lm))
+case1002_augment <- augment(case1002_lm)  # add fitted values
+ggplot(case1002_augment, aes(`log(Mass)`, `log(Energy)`, color = Type)) + 
+  geom_point() + 
+  geom_line(aes(y = .fitted), size = 1)
+```
+Looking at the p-value, since they are significantly larger than 0.05, we fail to reject the null hypothesis and conclude that the lines for echo locating bats and non-echo locating birds coincide.
+
+### (2c)
+Do the following test: $H_0: \beta_2 = \beta_3$ vs. $H_A: \beta_2 \neq \beta_3$ where $\beta_2$ is the coefficient for the non-echo locating bats and $\beta_3$ is the coefficient for the non-echo locating birds. Report the test stat and p-value for this test, then state your conclusion in context - carefully explaining what these hypotheses are stating about your model for log energy.
+
+```{r}
+case1002_lm <- lm(log(Energy) ~ log(Mass) + Type, data=case1002)
+vcov(case1002_lm)
+est <-  -0.07866 - 0.0235982
+se.est <- sqrt(0.009482580  + 0.009482580 *(-1)^2 + 2*(-1)*0.004914868)
+tstat <- est/se.est
+2*(1- pt(-tstat, df = 18))
+```
+From the calculations shown above we get a t-stat value of 0.3 and a corresponding p-value of 1.701. Since our p-value is much larger than 0.05, we fail to reject the alternative hypothesis and accept the null hypothesis. As such, we cannot conclude that the effect of body weight on mean total energy expenditure differs between non-echo locating bats and non-echo locating birds.
+
+### (2d)
+Draw a  scatterplot of the data for this problem (colored by animal type) and add the parallel regression lines to the plot for each type of animal.  **Hint:** See the Stat 230 Notes [Section 3.4.1.1  example](https://kstclair.github.io/stat-230-notes/mlr.html#mlr-penguins1) for the correct way to draw a parallel line model in `ggplot2`.
+
+```{r}
+library(skimr)
+skim(case1002)
+case1002_lm <- lm(log(Energy) ~ log(Mass) + Type, data=case1002)
+kable(tidy(case1002_lm))
+case1002_augment <- augment(case1002_lm)  # add fitted values
+ggplot(case1002_augment, aes(`log(Mass)`, `log(Energy)`, color = Type)) + 
+  geom_point() + 
+  geom_smooth(se = FALSE)+ 
+  geom_line(aes(y = .fitted), size = 1)
+```
+
+----------------------------------------
+
+
+
+## Problem 3: Agstrat data revisited again
+Recall the `agstrat.csv` data used for homework 1 and 2. This was a stratified random sample of US counties. We will consider the regression of farm acreage in 1992 (y) on farm acreage in 1982 (x).
+
+```{r}
+agstrat <- read.csv("http://people.carleton.edu/~kstclair/data/agstrat.csv")
+```
+
+### (3a) 
+Fit the regression of the `log` of `acres92` on the `log` of `acres82` and `region` with rows 119 (New York County, NY) and 168 (Parish County, LA) removed from the data. (These counties have very low or 0 acres). Write down the fitted mean functions (models) for each of the four regions.  Simplify your models/equations as much as possible  (e.g. give a formula with estimated slope and intercept for each of the regions, but no need to "unlog" your variables.)
+
+```{r}
+agstrat_new <- agstrat %>% slice(-119,-168)
+agstrat <- read.csv("http://people.carleton.edu/~kstclair/data/agstrat.csv")
+agstrat_new <- agstrat %>% slice(-119,-168)
+agstrat_lm <- lm(log(acres92) ~ log(acres82) + region, data = agstrat_new)
+kable(tidy(agstrat_lm))
+agstrat_augment <- augment(agstrat_lm)  # add fitted values
+ggplot(agstrat_augment, aes(`log(acres92)`, `log(acres82)`, color = region)) + 
+  geom_point() + 
+  geom_smooth(se = FALSE) + 
+  geom_line(aes(y = .fitted), size = 1)
+glance(agstrat_lm) %>% select(df.residual, nobs) %>% kable()
+```
+
+$$
+\hat \mu_{log(acres92)|log(acres82), region} = -0.7251775 + 1.0539321(log(acres82)) - 0.0920789(regionNE) - 0.0126336(regionS) - 0.0248363(regionW)
+$$
+$$
+\hat \mu_{log(acres92)|log(acres82), region = NC} = -0.7251775 + 1.0539321(log(acres82)) - 0.0920789(0) - 0.0126336(0) - 0.0248363(0) = -0.7251775 + 1.0539321(log(acres82))
+$$
+$$
+\hat \mu_{log(acres92)|log(acres82), region = NE} = -0.7251775 + 1.0539321(log(acres82)) - 0.0920789(1) - 0.0126336(0) - 0.0248363(0) = 0.7251775 + 1.0539321(log(acres82)) - 0.0920789
+$$
+$$
+\hat \mu_{log(acres92)|log(acres82), region = S} = -0.7251775 + 1.0539321(log(acres82)) - 0.0920789(0) - 0.0126336(1) - 0.0248363(0) = 0.7251775 + 1.0539321(log(acres82)) - 0.0126336
+$$
+$$
+\hat \mu_{log(acres92)|log(acres82), region = W} = -0.7251775 + 1.0539321(log(acres82)) - 0.0920789(0) - 0.0126336(0) - 0.0248363(1) = 0.7251775 + 1.0539321(log(acres82)) - 0.0248363
+$$
+Note: you can omit one or more cases from a `lm` by adding a `subset` argument to the command. For example, adding `subset=-c(119,168)` to the `lm` command will omit rows 119 and 168 from your regression fit!
+
+### (3b) 
+Consider the t-test for the parameter $\beta_{NE}$ (the $\beta$ parameter for the NE region). Using the p-value given for the t-test, carefully interpret the result of this test. 
+
+$$
+t-test = \frac{-0.0920789 - 0}{0.0352412} = -2.61282
+$$
+
+$$
+2*pt(2.61282, df=293) = 1.990557
+$$
+From the calculations shown above we get a t-stat value of -2.61282 and a corresponding p-value of 1.990557 Since our p-value is much larger than 0.05, we fail to reject the alternative hypothesis and accept the null hypothesis. As such, we cannot conclude that there is an effect of acreage in 82 in the NE region on mean acreage in 92 in the NE region, after controlling all other variables.
+
+------------------------------------------
+
+
+
+## Problem 4: Wages and Race
+Consider ch.10 exercise 29 to answer the following questions. Review the background info for this exercise and data coding provided by the exercise description. We will still consider whether the CPS provides evidence of racial discrimination with respect to wages after accounting for factors like education, experience and location. Here is the model we are considering for this problem:
+$$
+\mu(\log(WeeklyEarnings)) = \beta_0 + \beta_1 Educ + \beta_2 Exper + \beta_3 RaceNotBlack + \beta_4 MetStatus + \beta_5 regionNE +\beta_6 regionS + \beta_7 regionW + \beta_8 regionNE \times RaceNotBlack +\beta_9 regionS \times RaceNotBlack+ \beta_{10} regionW\times RaceNotBlack
+$$
+
+### (4a)
+Write down the model mean function for Black males in the midwest region. Then repeat this for non-Black males in the midwest. Which **one** parameter ($\beta$) measures the difference in mean earnings between Black and non-Black populations in the midwest region? 
+
+$$
+\mu(\log(WeeklyEarnings)|black, region = MW) = \beta_0 + \beta_1 Educ + \beta_2 Exper + \beta_4 MetStatus
+$$
+
+$$
+\mu(\log(WeeklyEarnings)|notblack, region = MW) = \beta_0 + \beta_1 Educ + \beta_2 Exper + \beta_3 RaceNotBlack + \beta_4 MetStatus
+$$
+$$
+\mu(\log(WeeklyEarnings)|notblack, region = MW) - \mu(\log(WeeklyEarnings)|black, region = MW) = \beta_0 + \beta_1 Educ + \beta_2 Exper + \beta_3 RaceNotBlack + \beta_4 MetStatus - (\beta_0 + \beta_1 Educ + \beta_2 Exper + \beta_4 MetStatus) = \beta_3 RaceNotBlack
+$$
+By subtracting the two, we see that it is the $\beta_{3}$ that measures the difference in mean earnings between Black and non-Black populations in the midwest region.
+
+### (4b)
+Write down the model mean function for Black males in the northeast region. Then repeat this for non-Black males in the northeast. Which **combination** of parameters ($\beta$'s) measures the difference in mean earnings between Black and non-Black populations in the northeast region?
+  
+$$
+\mu(\log(WeeklyEarnings)|black, region = NE) = \beta_0 + \beta_1 Educ + \beta_2 Exper + \beta_4 MetStatus + \beta_5 regionNE +  \beta_8 regionNE \times RaceNotBlack
+$$
+
+$$
+\mu(\log(WeeklyEarnings)|nonblack, region = NE) = \beta_0 + \beta_1 Educ + \beta_2 Exper + \beta_3 RaceNotBlack + \beta_4 MetStatus + \beta_5 regionNE +  \beta_8 regionNE \times RaceNotBlack
+$$
+$$
+\mu(\log(WeeklyEarnings)|nonblack, region = NE) - \mu(\log(WeeklyEarnings)|black, region = NE) =  \beta_0 + \beta_1 Educ + \beta_2 Exper + \beta_3 RaceNotBlack + \beta_4 MetStatus + \beta_5 regionNE +  \beta_8 regionNE \times RaceNotBlack - ( \beta_0 + \beta_1 Educ + \beta_2 Exper + \beta_4 MetStatus + \beta_5 regionNE +  \beta_8 regionNE \times RaceNotBlack) = \beta_3 RaceNotBlack + \beta_8 regionNE \times RaceNotBlack
+$$
+
+### (4c)
+Researchers are particularly interested in determining if the effect of race (Black/non-Black) on earnings of males differs by region, after controlling for region, education, experience, and metropolitan status. Explain why the model above can be used to answer this question.
+
+The model can be used to explain this effect because, with a baseline set for black employees in the Midwest region, every factor and combination of factors  exists a parameter that shows its effects on the mean (parameters specific to the region as well as parameters specific to non-Black in a region). All the variables can be considered categorical and to determine effect of race in each region all that would need to be done is to keep the controlled region, education, experience, and metropolitan status constant while changing the categorical not related to the region to "0" while keeping the variables that are related to the region to "1" (as shown in the example above for NE and MW). This way, we can determin the effect of race on earnings of male differing from region to region.
+
+### (4d)
+Using  the data for exercise 29 (`ex1029`), create the `ggplot2` package boxplot of log earnings vs. race *faceted* by region (make sure to turn `eval=TRUE` in your homework):
+```{r, eval=TRUE}
+ex1029 <- ex1029
+ggplot(ex1029, aes(x=Race, y=WeeklyEarnings)) + 
+  geom_boxplot() + 
+  facet_wrap(~Region) + 
+  scale_y_log10()
+```
+Explain what this plot shows about the relationship between earnings, race and region. Does it support the idea that the effect of race on earnings differs by region?
+
+(note: you will actually fit this model and analyze it in HW 5!)
+
+Looking at the boxgraph, we see that the NotBlack mean weekly earnings is consistenly higher than their black counterparts. However, as we move from region to region while keeping all other variables controlled, we do not see a significant shift or change casued by the chagne of region. As scuh, we can conclude that while ones race and ethnicity plays a role in their weekly earnings, the region in which they work does not have a significant effect on their earnings (the difference of race persists throughout all regions despite changing regions).
+----------------------------------------------------
+
+## Problem 5: Woodpecker nesting 
+**No R work is needed (expect for qt command) - all the info for this problem is given below.** Recall the woodpecker example from the day 3 notes.  Below is the output for the regression of nest depth (cm) on air temp (Celsius), along with covariance matrix for the coefficients. Compute a 95% confidence interval for the mean response $\mu(depth \mid temp=8)=\beta_0 + \beta_1(8)$ when temp is 8 degrees Celsius using the facts about inference for linear combinations of coefficients from ch. 10 (section 10.4.3). Your CI should match (except for rounding error) the CI obtained in the day 3 notes using the `predict` command: 15.83 to 18.94 cm.
+
+```{r}
+wpdata<- read.csv("http://people.carleton.edu/~kstclair/data/woodpeckers.csv")
+wood_lm<- lm(depth ~ temp, data = wpdata)
+summary(wood_lm)
+vcov(wood_lm)
+est <- 20.12228 - 8*0.34218
+se_est <- sqrt(0.88406062  + (-1)^2*0.03908105)
+glance(wood_lm)$df.residual 
+tstar <- qt(.975, df = 10)
+est - tstar*se_est 
+est + tstar*se_est 
+``` 
+
+
+----------------------------------------------------
+
+
+
+## Problem 6: Gender stereotypes
+A 2017 *Science* article studied gender stereotypes around intellect in 5-7 year old boys and girls ([link](http://science.sciencemag.org/content/355/6323/389)). For this problem we will look at some of the data collected for studies 3 and 4, contained in the data file `SteroTypeStudy34.csv`. For both these studies, researchers measured subject interest in either a game for "smart" people or a game for people who "try-hard." The response `interest` is a standardized measure of subject interest in the "smart" games, so higher `interest` means more interest expressed in that type of game than other study subjects. The variable `gender` records gender (boy/girl) and `age2` groups subjects into 5-year-old (`age5`) participants and 6- to 7-year-old (`age6and7`) participants. This mimics the use of age in some of the paper's results. 
+
+```{r}
+stereo <- read.csv("http://math.carleton.edu/kstclair/data/StereoTypeStudy34.csv")
+```
+
+
+### (6a) 
+Create an EDA graph that explores whether the effect of `gender` on `interest` level is affected by the age of the subject (measured by `age2` *not* by `age`). Explain what your graph shows you.
+
+```{r}
+stereo <- read.csv("http://math.carleton.edu/kstclair/data/StereoTypeStudy34.csv")
+ggplot(stereo, aes(x=gender, y=interest)) + 
+  geom_boxplot() + 
+  facet_wrap(~age2)
+```
+The graph shows that while at age 5 girls show higher interest than boys at age 5, boys show more interest thatn girls in games from age 5 to 6
+
+### (6b)
+Determine the appropriate regression model to model `interest` as a function of `gender` and `age2` that allows the effect of `gender` on `interest` to differ by `age2` group. Write down your model mean function in terms of $\beta$ parameters first (like was done at the start of problem 4), then fit the model in R. Then, holding age constant, write down the estimated mean interest level for girls and for boys.
+
+```{r}
+stereo <- read.csv("http://math.carleton.edu/kstclair/data/StereoTypeStudy34.csv")
+stereo_lm<- lm(interest ~ gender * age2, data = stereo)
+summary(stereo_lm)
+```
+
+$$
+\mu(interest|age, gender) = \beta_0 + \beta_1 gendergirl + \beta_2 age2age6and7 + \beta_3 gendergirl * age2age6and7
+$$
+$$
+\mu(interest|age, gender = boy) = \beta_0 + \beta_1 0 + \beta_2 age2age6and7 + \beta_3 0 * age2age6and7 = \beta_0 + \beta age2age6and7
+$$
+
+$$
+\mu(interest|age, gender = girl) = \beta_0 + \beta_1 gendergirl + \beta_2 age2age6and7 + \beta_3 gendergirl * age2age6and7
+$$
+### (6c)
+Use your model in (b) to determine if interest level in "smart" games differs by gender for the 5-year old age group. Give a p-value to support your conclusion and, if statistically significant, give and interpret a confidence interval for the effect of gender in this age group. 
+
+According to the lm() above, we get that the $\beta_{1}$ term is of p-value 0.5683. Since this is significantly larger than the 0.05 threshold, we reject the alternative hypothesis and keep the null hypothesis. As such, we an conclude that there exists no difference in interest levels in "smart" games between genders for the 5-year old age group.
+
+
+### (6d)
+Repeat (c) but for the 6 to 7-year old age group. 
+
+$$
+\mu(interest|age = 6and7, gender = girl) - \mu(interest|age = 6and7, gender = girl) = \beta_0 + \beta_1 gendergirl + \beta_2 age2age6and7 + \beta_3 gendergirl * age2age6and7 - (\beta_0 + \beta age2age6and7) = \beta_1 gendergirl - \bet_3 gendergirl * age2age6and7
+Var1 <- (-1)^2 * 0.0543549)
+Var2 <- (-1)^2 * 0.08343398
+Cov <- 2*(-1)*(-1)* -0.05435493
+sqrt(Var1 + Var2 + Cov)
+$$
+
+```{r}
+summary(stereo_lm)
+vcov(stereo_lm)
+Var1 <- (-1)^2 * 0.0543549
+Var2 <- (-1)^2 * 0.08343398
+Cov <- 2*(-1)*(-1)* -0.05435493
+sqrt(Var1 + Var2 + Cov)
+tstar <- (-0.1334 - (-0.5769))/(sqrt(Var1 + Var2 + Cov))
+tstar
+2*(1-pt(tstar, df = 116))
+```
+According to the calculations above, we get a p-value of 0.0105. Since this is significantly less than 0.05, we can reject the null hypothesis and accept the alternative. As such, we conclude that there is a difference in interest between genders from the ages 6 to 7. 
+

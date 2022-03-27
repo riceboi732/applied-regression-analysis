@@ -1,0 +1,4 @@
+"0","stereo <- read.csv(""http://math.carleton.edu/kstclair/data/StereoTypeStudy34.csv"")"
+"0","ggplot(stereo, aes(x=gender, y=interest)) + "
+"0","  geom_boxplot() + "
+"0","  facet_wrap(~age2)"

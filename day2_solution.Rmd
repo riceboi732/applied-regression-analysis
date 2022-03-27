@@ -1,0 +1,181 @@
+---
+title: "Day 2 - Comparing two means (review) - solution"
+author: "St Clair"
+output: html_document
+---
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(echo = TRUE, # show code?
+                      eval = TRUE, # run code?
+                      message = FALSE, warning = FALSE)
+```
+
+### General questions
+
+1. What is the difference between a parameter and a statistic? Give an example of a parameter and a statistic, using "common" notation for each.
+
+*answer:* A parameter is a number that describes a population or a theoretical "true" model. A statistic is a number computed from a sample of data. For example, we might let the parameter $\mu$ represent  the mean income for all adults residing in Northfield and the statistic $\bar{x}$ represent the mean income for a sample of 100 adults residing in Northfield. 
+
+2.  Suppose you are told a 95% confidence interval for the proportion of registered voters for Trump just before the 2018 election is 0.38 to 0.44. What does this mean? What is the margin of error for this CI? What does "95% confidence" mean?
+
+*answer:* The interval represents likely values of the true proportion of **all** registered voters who would vote for Trump. The margin of error is have the length of the interval, or 0.03. 95% confidence means that 95% of all possible samples of the same size that could be taken from this population will give an confidence interval that contains the true population proportion. Another way to say this is that 95% of all possible samples will give an estimated proportion for Trump that is within 0.03 (margin of error) of the true populatation proportion for Trump.  
+
+3. A [study](http://www.nytimes.com/2015/12/25/opinion/give-if-you-know-whats-good-for-you.html)  found that participants who spent money on others instead of themselves had significantly lower blood pressure (two-sided p-value=0.012). What are the hypotheses for this test? What does the p-value mean? 
+
+*answer:* The null hypothesis would state that the **true** mean blood pressures would be the same regardless of if they spent money on themselves or others. The p-value given above is from a two-sided alternative (means not equal), but since they found a statistically significant difference (with p<0.05) the conclusion given was directional (that spending on others lowers average blood pressure).  The p-value means that the observed difference in mean blood pressures (not given) would occur just by chance only about 1.2% of the time. 
+
+4. Inference methods rely on understanding the [*sampling distribution*](http://lock5stat.com/statkey/) of the statistic that we used to estimate our unknown parameter. What does the sampling distribution of the sample mean look like? What does the standard error of the sample mean measure? How is the sampling distribution used in a hypothesis test? How is it used with confidence intervals?
+
+*answer:* Under the right conditions, the distribution of many sample means will look like a normal distribution that is centered at the true population mean value. The conditions for "normality" (symmetry) have to do with both the sample sized and the distribution of your variable. 
+
+- If your measurements are very symmetric (e.g. heights of woman in an adult population) then the sample size $n$ can be very small and the sample mean will behave normally.
+- As your measurements get more skewed (e.g. income per person in a large city), then the sample size $n$ needs to get larger for the sample mean to behave normally.
+
+The standard error of the sample mean measures the variability of this statistic and is the standard deviation of the sampling distribution for $\bar{x}$. Roughly, the SE of any statistic tells us how it will vary from sample to sample. 
+
+The sampling distribution is used to compute the p-value in a hypothesis test by assuming the null is true and comparing the observed results to what we expect under the null. 
+
+The sampling distribution is used to construct the correct margin of error for any level of "confidence". The usual CI form is  estimate $\pm$ margin of error. The margin of error is computed so that, say, 95% of the time the estimate will be within the "margin of error" of the truth. A rough guess at a 95% margin of error is $2\times SE$. 
+
+### Comparing two means 
+The data set `agstrat.csv` contains a stratified random sample of 300 US counties
+
+- Sampling units: counties
+- Strata: region (North Central, Northeast, South, West)
+- response: number of farms in 1992 (`farms92`)
+- How can we answer the question: 
+    - Do the average number of farms per county differ in the western and north central regions in 1992? 
+    
+Our basic plan for analysis looks like:
+
+1. Data: load  and clean/manipulate (if needed)
+2. EDA: exploratory data analysis
+3. Inference: run tests/CIs and check assumptions!
+4. Conclusion:  interpret results, avoid lots of stats jargon!
+
+
+
+####  1. Data
+
+Read in the data and check variable names:
+```{r}
+agstrat<- read.csv("http://people.carleton.edu/~kstclair/data/agstrat.csv")
+names(agstrat)
+```
+
+
+**(1a) How many counties were sampled from each region?**
+
+*answer:* There are 103 counties in the NC, 21 in the NE, 135 in the S and 41 in the W. 
+```{r}
+table(agstrat$region)
+```
+
+We want to focus on W and NC for our comparison. I will do a lot of data manipulation in this class using the R package `dplyr`. This package is already available on the mirage server, but if you are using a newly installed version of Rstudio on your computer you will need to install the package first. 
+
+The `filter` command from the `dplyr` package selects **rows** from a data set that we want to keep. E.g. only rows from the W or NC regions. The argument used in this command is a **logical** statement and the row of a given case is kept in the data set when the statement is `TRUE`. 
+ 
+```{r}
+library(dplyr)  # need to load the package commands
+agstrat2 <- filter(agstrat, region %in% c("W", "NC"))
+table(agstrat2$region)
+```
+
+
+#### 2. EDA
+
+**(2a) In 2-3 sentences, compare the distributions (shape, center, spread) of `farms92` by `region` (W vs. NC).**
+
+*answer:* The distribution of number of farm per county in both regions are slightly skewed to the right with one large outlier in the west. Counties in the NC region tend to have a higher number of farms than counties in the W (NC: mean 750.7 and median 738; W: mean 602.3 and median 495 with outlier). With the outlier included, the standard deviation of farms indicates much more variability within the west region (NC: 358; W: 558) but IQRs are similar (NC: 479; W: 476).  
+
+Note that the commands below give basic R commands for comparing distributions graphically and numerically. You do not necessarily need to use or show all output below when answering this type of question for homework, exams or reports. 
+
+Graphical options include boxplots:
+```{r, fig.width=9, fig.height=4}
+boxplot(farms92 ~ region, data = agstrat2, horizontal=TRUE, main="Number of farms (1992) by region", ylab = "region", xlab = "# of farms per county in 1992")
+```
+
+or faceted histograms from the `ggplot2` package:
+```{r, fig.width=9, fig.height=4}
+library(ggplot2)  # load ggplot2 package
+ggplot(agstrat2, aes(x=farms92)) + 
+  geom_histogram() + 
+  facet_wrap(~region) + 
+  labs(title = "Number of farms by region")
+```
+
+Summary stats, by region, can be found using multiple tools in R. The `tapply` command is an option:
+```{r}
+tapply(agstrat2$farms92, agstrat2$region, summary)
+```
+
+So is using the `group_by` and `summarize` combination in `dplyr`. Here we get the mean and SD of `farms92` for both regions:
+```{r}
+agstrat2 %>% 
+    group_by(region) %>%
+    summarize(mean(farms92), sd(farms92))
+```
+
+
+**(2b) What county has the unusually high number of farms in the western region? How many farms do they have? Any ideas why it is so large? How do the summary stats change when this county is omitted?**
+
+*answer* Hawaii county is the extreme outlier in the west with 3157 farms. The mean and SD are most influenced by this outlier, both drop considerably with Hawaii county removed (mean: 602 vs. 538; SD: 558 vs. 385). The median and IQR are much more robust stats and barely drop when removing Hawaii county (median: 495 vs. 492; IQR: 476 vs. 464).
+
+More on Hawaii county: A google search reveals that farms in Hawaii are not large-scale farming operations that grow corn or soybeans, rather some of their top crops are coffee and nuts ([source](http://www.agcensus.usda.gov/Publications/2012/Online_Resources/County_Profiles/Hawaii/cp15001.pdf)). The variable `smallf92` tells us how many farms are 9 acres or less in 1992. In Hawaii county in 1992, about 62% of all farms are small farms which is one of the highest proportion of small farms in the entire US. 
+
+Here we find which row in `agstrat2` has a `farms92` value greater than 3000:
+```{r}
+which(agstrat2$farms92 > 3000)   
+```
+
+What county is this? We need to access row 118 in `agstrat2`. We use use `[]` subsetting or the `slice` command from `dplyr`:
+```{r}
+agstrat2[118,]  # see row 118
+slice(agstrat2, 118)  # another way to see row 118
+```
+
+We can use the `dplyr` commands for (2a) with the `slice` command added to get stats without row 118
+```{r}
+agstrat2 %>% slice(-118) %>%    # slice removes row 118
+    group_by(region) %>%  # then get stats by region
+    summarize(mean(farms92), sd(farms92), median(farms92), IQR(farms92))
+```
+
+
+#### 3. Inference
+
+**(3a) What hypotheses are being tested with the `t.test` command below? What are the p-value and test statistics values for this test? How do you interepret the test statistic? How do you interpret the p-value? Are the assumptions met for this t-test?**
+
+*answer:* If $\mu_W$ and $\mu_{NC}$, respectively, represent the mean number of farms per county in the W and NC populations, then the two-sided hypotheses are
+\begin{align*}
+H_0: & \mu_W = \mu_{NC} \\
+H_A: & \mu_W \neq \mu_{NC}
+\end{align*}
+The test stat is $t=1.5775$ and the p-value is 0.1206. **Interpret test stat:** The test statistic tells us that the observed difference in average number of farms (NC minus W) is 1.5775 SEs above the hypothesized difference of 0. Recall how this t test stat value is computed for a two-sample comparison of means:
+$$
+t = \dfrac{estimated.difference - null.difference}{SE.difference} = \dfrac{(\bar{x}_{NC} - \bar{x}_{W}) - 0}{\sqrt{\dfrac{s^2_{NC}}{n_{NC}} + \dfrac{s^2_{W}}{n_{W}}}}
+$$
+**Interpret p-value:** If there is no difference in mean number of farms between each region, there is about a 12% chance of observing a sample difference in means that is at least 1.58 SEs away from 0. 
+
+The sample sizes within each group (NC 102, W 41) are large enough that skewness in the observed number of farms from NC and W is fine. The outlier in the west is an issue though, since it definitely has an influence on both the mean and SD of number of farms in the west. The analysis should really be done without this unusual county.
+
+```{r}
+# run t test to compare mean number of farms 
+t.test(farms92 ~ region, data = agstrat2)
+```
+
+**(3b) How and why do the test stat and p-value change when we omit row 118? Does your test conclusion change when omitting 118? Why?**
+
+*answer:* The test stat increases to 3.0179 because (1) the observed difference in means is now larger since the mean in the west drops without 118 and (2) the SE of the observed difference is now less because removing 118 drops the SD $s_{W}$ in the west. Now we found that the observed difference is about 3 SEs above what we hypothesized. The observed difference is now more extreme (unusual under the null) so the corresponding p-value now drops to 0.0036. If there is no difference in the population means in the W and NC, then our observed difference, or one even more extreme, would occur only 0.36% of the time. We now find that after removing Hawaii county, the observed difference in means between NC and W is now statistically significant. When Hawaii county is included the p-value was 0.12 which indicates that the observed difference is not that unusual under the null hypothesis and we would not have found a statistically significant difference. 
+
+```{r}
+# redo without row 118 outlier
+t.test(farms92 ~ region, subset = -118, data = agstrat2)
+```
+
+#### 4. Conclusion
+**(4a) Do the average number of farms per county differ in the western and north central regions in 1992? If they do differ, by how much? Answer these question in context using numbers from the results above to support your conclusions.**
+
+*answer:* We will remove Hawaii county from our analysis because it is so different from the rest of the counties in the west and it is influential in our analysis. Without Hawaii county we found that there is a difference in the mean number of farms per county in the W and NC regions (t = 3.018, df = 66.8, p = 0.0036). The observed mean difference (212.2  farms) for our sample is statistically significant. 
+
+We are 95% confidence that the average number of farms per county for all counties in the north central region is between 71.8 to 352.6 farms higher than the average for all counties in the western region.

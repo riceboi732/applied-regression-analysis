@@ -1,0 +1,25 @@
+"0","lm(formula = DemMachineVotes ~ DemAbsenteeVotes, data = ex0820)"
+"1","
+Call:
+"
+"1",""
+"1","lm(formula = DemMachineVotes ~ DemAbsenteeVotes, data = ex0820)"
+"1",""
+"1","
+
+"
+"1","Coefficients:
+"
+"1","     (Intercept)  "
+"1","DemAbsenteeVotes  "
+"1","
+"
+"1","        48644.06  "
+"1","            4.36  "
+"1","
+"
+"1","
+"
+"0","```"
+"2","Error: attempt to use zero-length variable name
+"

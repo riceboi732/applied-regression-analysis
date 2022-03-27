@@ -1,0 +1,1 @@
+"0","ex0825_lm <- lm(Bush2000 ~ Buchanan2000, data = ex0825) # creating the linear model"

@@ -1,0 +1,332 @@
+---
+title: "Stat 230 HW 5"
+author: 'Name: Victor Huang'
+output:
+  pdf_document: default
+  html_document: default
+---
+```{r, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, prompt=FALSE, comment=NULL)
+library(Sleuth3)
+library(ggplot2)
+library(ggResidpanel)
+library(dplyr)
+library(broom)
+library(knitr)
+```
+
+
+### worked with: Eric, Katie, Nina, Jeanny
+
+
+Homework 5 is due **by 3pm Thursday, Oct. 21**. Please complete the assignment in this Markdown document, filling in your answers and R code below.  I didn't create answer and R chunk fields like I did with homework 1, but please fill in your answers and R code in the same manner as hw 1.  Submit  a hard copy of the **compiled pdf or word doc** either
+
+  - in class 
+  - in drop-in office hours 
+  - in the paper holder outside my CMC 222 office door
+
+Tips for using Markdown with homework sets:
+
+- Work through a problem by putting your R code into R chunks in this .Rmd. Run the R code to make sure it works, then knit the .Rmd to verify they work in that environment.
+    - Make sure you load your data in the .Rmd and include any needed `library` commands. 
+- Feel free to edit or delete  questions, instructions, or code provided in this file when producing your homework solution. 
+- For your final document, you can change the output type from `html_document` to `word_document` or `pdf_document`. These two to output types are better formatted for printing. 
+  - on maize: you may need to allow for pop-ups from this site 
+- If you want to knit to pdf while running Rstudio from your computer (*not* from maize), you  will need a LaTeX compiler installed on your computer. This could be [MiKTeX](https://miktex.org/), [MacTeX](http://www.tug.org/mactex/) (mac), or TinyTex. The latter is installed in R: first install the R package `tinytex`, then run the command `tinytex::install_tinytex()` to install this software. 
+  - If you are using maize, you don't need to install anything to knit to pdf!
+
+
+--------------------------------------------
+
+
+## Problem 1:  ANOVA 
+Below is the  ANOVA table for the regression of percent bodyfat (\%) on midarm, triceps, and thigh skinfold measurements (cm): $\mu(\textrm{bodyfat}| X) = \beta_0 + \beta_1 \textrm{midarm} + \beta_2 \textrm{triceps} + \beta_3 \textrm{thigh}$.   Use this output to answer the questions (a)-(f) that follow along with the fact that the total sum of squares SST for bodyfat is $SST = 495.3895$.
+
+```
+> bodyfat.lm<- lm(bodyfat ~ midarm + triceps + thigh)
+> anova(bodyfat.lm)
+Analysis of Variance Table
+
+Response: bodyfat
+          Df Sum of Sq  Mean Sq  F Value     Pr(F)
+   midarm  1   10.0516  10.0516  1.63433 0.2193400
+  triceps  1  379.4037 379.4037 61.68860 0.0000007
+    thigh  1        A?   7.5293  1.22421 0.2848944
+Residuals 16   98.4049       B?
+```
+
+### (1a) 
+Fill in the ?'s (A and B).
+
+$A = 495.3895 - 10.0516 - 379.4037 - 98.4049 = 7.5293$
+$B = \frac{98.4049}{16} = 6.15030625$
+
+### (1b) 
+How many observations ($n$) are in the data set?
+
+$n = (16 + 1 + 1 + 1) + 1 = 20$
+
+### (1c)
+What is the estimated model standard deviation $\hat{\sigma}$ for the full model?
+
+$\hat{\sigma} = \sqrt{\frac{SSR}{n-(p+1)}} = \sqrt{\frac{98.4049}{20 - (3+1)}} = \sqrt{\frac{98.4049}{16}} = 2.479981$
+
+### (1d) 
+What is the SSreg(midarm, triceps, thigh), the regression sum of squares for the regression of bodyfat on midarm, triceps, and thigh?
+
+$SSreg_{midarm} = 495.3895 - 10.0516 = 485.3379, SSreg_{triceps} = 495.3895 - 379.4037 = 115.9858, SSreg_{thigh} = 495.3895 - 7.5293 = 487.8602$
+
+### (1e) 
+Suppose you want to test the significance of thigh in the model that already includes midarm and triceps. Use the information above to test this with an F test. State your null and alternative models, give the F test stat and p-value for this comparison, and give your conclusion.
+
+$H_{0} : \beta_{thigh} = 0;  H_{A} : \beta_{thigh} \neq 0$
+
+Looking at the table above we get a F-stat of 1.22421 for thighs. The corresponding p-value for this F-stat is 0.2848944. Since our p-value is significantly higher than 0.05, we fail to reject the null hypothesis. As such, we can conclude that the thigh's skin fold thickness is not associated with total body fat percentage.
+
+### (1f) 
+Suppose you want to test the significance of thigh and triceps in the model that already includes midarm. Use the information above to test this with an F test. State your null and alternative models, compute the F test stat and p-value for this comparison, and give your conclusion. (Note that the test stat/p-value are **not given in the table** - you will need to compute them from the info given.)
+
+$H_{0} : \beta_{thigh} = \beta_{tricep} = 0;  H_{A} : \beta_{thigh},\beta_{tricep} \neq 0$
+
+$SSR(thigh, tricep) = 379.4037 + 7.5293 = 386.933$
+$MSR(thigh, tricep) = \frac{98.4049}{16} = 6.150306$
+$F = \frac{386.933/16}{6.150306} = \frac{24.18331}{6.150306} = 3.93205$
+```{r}
+1- pf(3.93205, 2, 20)
+```
+$p-value = 0.03629525$
+
+As we can see above, we calculate the F-value to be 3.93205. The corresponding p-value is shown to be 0.03629525. Since the p-value is less than 0.05, we can reject the null hypothesis and accept the alternative. As such we can conclude that at least one variable between thigh and tricep skinfold thickness is correlated with body fat percentage
+
+
+
+## Problem 2: Crab Claws ch.10 exercise 10 
+Show all work ("by hand") but use R to get the p-value.
+
+$Model DF for Larger = 32, RSS_{larger} = 5.99713$
+$Model DF for Smaller = 34, RSS_{smaller} = 8.38155$
+$DF = 34 - 32 = 2$
+$ExtraSS = 8.38155 - 5.99713= 2.38442$
+$F-stat = \frac{2.38442/2}{5.99713/32} = \frac{1.19221}{0.1874103} = 6.361497$
+```{r}
+1-pf(6.361497, 2, 32)
+```
+$p-value = 0.004719606$
+
+As we can see, we get a f-stat of 6.361497 and a corresponding p-value of 0.004719606. Since the p-value is less than 0.05, we are able to reject the null hypothesis and conclude that the slopes are different for the three species. 
+---------------------------------------------
+
+
+## Problem 3: Brain Weights ch.10 exercise 12 
+Recall that the model fit in section 9.1.2 is `log(BrainWt)` on `log(BodyWt)`, `log(Litter)`, and `log(Gestation)`. (Use any log-base that you like). The data for this is found in `case0902`.
+
+```{r}
+case0902 <- case0902
+case0902_lm <- lm(log(Brain) ~ log(Body) + log(Litter) + log(Gestation), data = case0902)
+anova(case0902_lm)
+```
+$H_{0} : \beta_{litter} = \beta_{gestation} = 0;  H_{A} : \beta_{litter},\beta_{gestation} \neq 0$
+
+$SSR(litter, gestation) = 416.40 + 8.69 = 425.09$
+$MSR(litter, gestation) = \frac{20.74}{92} = 0.2254348$
+$F = \frac{425.09/92}{0.2254348} = \frac{4.620543}{0.2254348} = 20.49614$
+```{r}
+1- pf(20.49614, 2, 92)
+```
+$p-value = 4.347346e-08$
+
+As we can see above, we calculate the F-value to be 20.49614. The corresponding p-value is shown to be 4.347346e-08. Since the p-value is less than 0.05, we can reject the null hypothesis and accept the alternative. As such we can conclude that at least one variable between gestation period and litter size is correlated with brain weight.
+
+
+---------------------------------------------
+
+
+## Problem 4: Wages and Race revisited
+Refer back to the wages and race problem in homework 4. 
+
+### (4a)
+In R, fit the interaction model described below:
+$$
+\begin{split}
+\mu(\log(WeeklyEarnings)) 
+&= \beta_0 + \beta_1 Educ + \beta_2 Exper + \beta_3 RaceNotBlack + \beta_4 MetStatus + \beta_5 regionNE \\
+& +\beta_6 regionS + \beta_7 regionW + \beta_8 regionNE \times RaceNotBlack \\
+& +\beta_9 regionS \times RaceNotBlack+ \beta_{10} regionW\times RaceNotBlack
+\end{split}
+$$
+Use an F test to test whether the effect of race (black/nonblack) on earnings of males differs by region, after controlling for race, region, education, experience, and metropolitan status. Write down the null and alternative hypotheses in terms of a mean function for log(earnings) (e.g. Null: $\mu(\log(WeeklyEarnings)) = ...$ vs. Alt: $\mu(\log(WeeklyEarnings)) = ...$), then use R to do the F test of these hypotheses. State your conclusion, in context, for this test.
+
+$$
+\begin{split}
+H_{0}:\mu(\log(WeeklyEarnings)) 
+&= \beta_0 + \beta_1 Educ + \beta_2 Exper + \beta_3 RaceNotBlack + \beta_4 MetStatus + \beta_5 regionNE \\
+& +\beta_6 regionS + \beta_7 regionW
+\end{split}
+$$
+
+$$
+\begin{split}
+H_{a}: \mu(\log(WeeklyEarnings)) 
+&= \beta_0 + \beta_1 Educ + \beta_2 Exper + \beta_3 RaceNotBlack + \beta_4 MetStatus + \beta_5 regionNE \\
+& +\beta_6 regionS + \beta_7 regionW + \beta_8 regionNE \times RaceNotBlack \\
+& +\beta_9 regionS \times RaceNotBlack+ \beta_{10} regionW\times RaceNotBlack
+\end{split}
+$$
+```{r}
+ex1029_lm <- lm(log(WeeklyEarnings) ~ MetropolitanStatus + Exper + Educ + Race + Region, data = ex1029)
+ex1029_lm_new <- lm(log(WeeklyEarnings) ~ MetropolitanStatus + Exper + Educ + Race*Region, data = ex1029)
+anova(ex1029_lm_new)
+```
+
+Looking at the data above, we get a F-value of 0.3968 and a p-value of 0.7553. Since our p-value is larger than 0.05, we fail to reject the null hypothesis. As such, we conclude that region does not affect the income gap by race. 
+
+### (4b)
+Fit the no interaction model (below) and use it to interpret the effect that race (black vs. nonblack) has on earnings (original scale, not logged scale) after controlling for all other predictors, and give a confidence interval for this effect too.
+$$
+\begin{split}
+\mu(\log(WeeklyEarnings)) 
+&= \beta_0 + \beta_1 Educ + \beta_2 Exper + \beta_3 RaceNotBlack + \beta_4 MetStatus \\
+&+ \beta_5 regionNE +\beta_6 regionS + \beta_7 regionW 
+\end{split}
+$$
+```{r}
+ex1029_lm_new2 <- lm(log(WeeklyEarnings) ~ MetropolitanStatus + Exper + Educ + Region + Race, data = ex1029)
+summary(ex1029_lm_new2)
+confint(ex1029_lm_new2)
+```
+$e^{\mu(\log(WeeklyEarnings)) = \beta_0 + \beta_1 Educ + \beta_2 Exper + \beta_3 RaceNotBlack + \beta_4 MetStatus + \beta_5 regionNE +\beta_6 regionS + \beta_7 regionW} = e^{0.2436034}$
+
+As we can see, if race is not black, we get a multiplicative increase of $e^{0.2436034}$ on the median of weekly earnings which corresponds to a 26.26% increase an median weekly earnings. Our CI for the multiplicative change of not being black is from $e^{0.20844504}$ to $e^{0.25792926}$
+
+### (4c) 
+Describe the distribution of the residuals for the model given in part (b) with both a histogram and normal qq plot. Our modeling goal is to explore the effect of race (black/notblack) on mean earnings of males after controlling for region, education, experience, and MetStatus. With this in mind, is the distribution of these residuals concerning? Explain.
+
+```{r}
+resid_panel(ex1029_lm_new, plots = c("hist","qq"))
+```
+The residuals are not concerning, even though the qq plot if not normally distributed, this not important as we will only be finding the mean and not making a prediction. 
+
+### (4d) 
+Using the `ggResidpanel` package, create the six possible residual plots for this model (fitted + 5 predictors). For each, comment on the linearity and constant variance assumptions made for this model. This is a large data set (with lots of residuals), so add `smoother = TRUE` to add a smoother line to help detect nonlinearity in the overlapping points in your residual plots.
+
+```{r}
+resid_panel(ex1029_lm_new, plots = "resid", smoother = TRUE)
+resid_xpanel(ex1029_lm_new, smoother = TRUE)
+```
+1. Linearity is up held, looking at the redline we see curvature, as such, there is deviance in the constant variance. 2. Linearity is held, constant variance changes due to metstatus. 3. Linearity is held, looking at the redline we see curvature, as such, there is deviance. 4. Linearity is held, but since we can observe curvature in the redline, we see that constant variance as deviations. 5. Linearity is upheld, constant variance changes due to race status. 6. Linearity is upheld, constant variance changes due to region status. 
+
+## (4e)  
+One way to "test" for curvature is to add a quadratic term to your model. Since part (d) suggest a nonlinear effect of experience, add a quadratic term for experience to the linear model above and fit this model to the data. Use the t-test results to determine whether the nonlinear effect of experience is significant.
+
+```{r}
+ex1029_new_lm2 <- lm(WeeklyEarnings ~ MetropolitanStatus + Exper + Educ + Region + Race + I(Exper^2), data = ex1029)
+summary(ex1029_new_lm2)
+```
+Since the p-value for the quadratic experience term is 2e-16 and less than the 0.05 treshold. We can conclude that the n quadratic term is indeed significant.
+
+### (4f) 
+Using your model from (e), report the case numbers of the cases with the highest leverage, studentized residuals and Cook's distance values. Use the data for these cases and basic EDA to explain why their respective case influence stat is high. Then explain why none of these cases need to be removed from our data to adequately model earnings. 
+
+
+If you'd like to use the `augment`ed data frame to find the row number of these "max" case influence stats, I suggest that you do the following
+
+- Add **row numbers** to your data set, e.g. like this using `dplyr`:
+
+```{r}
+ex1029 <- ex1029 %>% mutate(case = row_number())
+ex1029_aug <- augment(ex1029_lm, data = ex1029)
+```
+Largest cook's distance is 0.0687246720 at case 17962, highest leverage is 0.006503881 at case 22486, largest studentized residuals is 46.155157 case 17962, 
+
+```{r}
+ex1029_newnew <- ex1029 %>% slice (-17962, -22486, -17962)
+ex1029_newnew_lm <- lm(WeeklyEarnings ~ MetropolitanStatus + Exper + Educ + Region + Race, data = ex1029)
+summary(ex1029_lm)
+summary(ex1029_newnew_lm)
+```
+Looking at the the two r-squared values, we do not see significant difference. Since there s no chagne in r-squared and experience, there s no need to remove these data points. 
+---------------------------------------------------
+
+
+## Problem 5:  Agstrat revisited 
+Revisit Homework 4 problem 3 that has you fitting a parallel line models. Use an ANOVA F test to determine if `region` is a statistically significant predictor of `acres92` after accounting for `acres82`.  
+
+```{r}
+agstrat <- read.csv("http://people.carleton.edu/~kstclair/data/agstrat.csv")
+agstrat_new <- agstrat %>% slice(-119,-168)
+agstrat_lm <- lm(log(acres92) ~ log(acres82) + region, data = agstrat_new)
+anova(agstrat_lm)
+```
+Looking at the code and results above, we get a F-value of 2.4229 and a p-value of 0.06602. Since our p-values is larger than 0.05, we fail to reject the null hypothesis and conclude that region is not a statistically significant predictor of acres in 92 after accounting for acres in 82. 
+-----------------------------------------------
+
+
+## Problem 6:  Warm-bloded T. Rex? 
+Consider the data in ch. 11 exercise 20 (`ex1120`). Review the background info provided for this exercise but answer the questions below. 
+
+### (6a) 
+Create a scatterplot of `Calcite` against `Carbonate`. Identify by row number the two cases that are obvious outliers. 
+
+```{r}
+ex1120 <- ex1120
+ggplot(ex1120, aes(x=Calcite, y=Carbonate)) + geom_point()
+```
+The row numbers for the two outliers are rows 1 and 2.
+
+
+### (6b) 
+Using all 18 data cases, fit the regression of `Calcite` on `Carbonate`. Report the following info:
+
+- Slope, SE for slope
+- p-value for slope
+- 95% CI for slope
+- $R^2$
+
+```{r}
+ex1120_lm <- lm(Calcite ~ Carbonate, data = ex1120)
+summary(ex1120_lm)
+confint(ex1120_lm)
+```
+Slope = 1.0702, SE for Slope = 0.1156, p-value = 7.93e-08, 95% CI = 0.8252384, 1.315332
+### (6c) 
+Repeat (b) but omit the case with the smallest `Carbonate` value. 
+
+```{r}
+data_c <- filter(ex1120, Carbonate > 23)
+ex1120_lm_c <- lm(Calcite ~ Carbonate, data = data_c)
+summary(ex1120_lm_c)
+confint(ex1120_lm_c)
+```
+Slope = 0.9217, SE of Slope: 0.1663, p-value = 5.65e-05, 95% CI = 0.5671886, 1.276304
+
+### (6d) 
+Repeat (b) but omit the cases with the smallest two `Carbonate` values. 
+
+```{r}
+data_d <- filter(ex1120, Carbonate > 24)
+ex1120_lm_d <- lm(Calcite ~ Carbonate, data = data_d)
+summary(ex1120_lm_d)
+confint(ex1120_lm_d)
+```
+Slope = 0.5896, SE of Slope: 0.2196, p-value = 0.0178, 95% CI = 0.1184916, 1.060627
+
+### (6e) 
+For your three models in (b), (c) and (d), provide the case-influence plot: `plot(my_lm, which=5, id.n=10)` and describe which case, or cases, have values of leverage, studentized residual, or Cook's distance beyond the usual threshold used to flag potentially unusual cases. Note that the row numbers shown in `plot` will be the row number of the *full* dataset with 18 data points, even if used `subset` to remove case(s) in the `lm` command. 
+
+Case 1 and 2 (the plots for the dataset with 2 and 1 outlier(s)) have Cook's distances beyond the usual threshold.
+
+```{r}
+plot(ex1120_lm, which=5, id.n=10)
+plot(ex1120_lm_c, which=5, id.n=10)
+plot(ex1120_lm_d, which=5, id.n=10)
+```
+
+### (6f) 
+Explain why the case influence stats for case 2 change so much between model (b) and model (c). How might pairs of influential cases not be found with the usual case influence stats?
+
+Because for case 1 there are two outliers, as such, the "weight" of each outlier becomes less significant as both show their influence on the total. With one of the outliers removed, all the influence falls onto the remaining point, making it much more influential and the stas change so much between the two cases.
+
+### (6g) 
+Use your results reported in (b) and (d) to justify why cases 1 and 2 are influential. How is the slope for `Carbonate` values between 25 and 30 different from the slope when we don't restrict the range of `Carbonate`?
+
+The r-squared value dropped significantly, the two points are overly influential. When we do restrict the range of Carbonate, there is a weaker response, as such, our slop drops.

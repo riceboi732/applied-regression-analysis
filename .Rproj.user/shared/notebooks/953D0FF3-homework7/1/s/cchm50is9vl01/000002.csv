@@ -1,0 +1,8 @@
+"0","ex2113_mutate <- mutate(ex2113,"
+"0"," prop = WithoutIllness/Number,"
+"0"," logOdds = log(prop/(1-prop)))"
+"0","ggplot(ex2113_mutate, aes(x = Dose, y = logOdds)) +"
+"0"," geom_point() + scale_x_log10()"
+"2","Warning:"
+"2"," Transformation introduced infinite values in continuous x-axis
+"
